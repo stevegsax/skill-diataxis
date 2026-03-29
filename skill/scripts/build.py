@@ -158,13 +158,26 @@ def generate_home_page(structure: dict, diataxis_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def get_pandoc_template(diataxis_dir: Path) -> Path | None:
-    """Return the template path if one exists."""
-    template = diataxis_dir / "_templates" / "page.html"
-    return template if template.exists() else None
+SKILL_ASSETS = Path(__file__).parent.parent / "assets"
 
 
-def convert_markdown(md_path: Path, html_path: Path, title: str, template: Path | None) -> None:
+def get_pandoc_template(diataxis_dir: Path) -> Path:
+    """Return the template path — project-local override or bundled default."""
+    local = diataxis_dir / "_templates" / "page.html"
+    if local.exists():
+        return local
+    return SKILL_ASSETS / "template.html"
+
+
+def convert_markdown(
+    md_path: Path,
+    html_path: Path,
+    title: str,
+    template: Path,
+    *,
+    quadrant: str | None = None,
+    cssroot: str = "",
+) -> None:
     """Convert a single markdown file to HTML via pandoc."""
     html_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -174,13 +187,15 @@ def convert_markdown(md_path: Path, html_path: Path, title: str, template: Path 
         "--to", "html5",
         "--standalone",
         "--mathjax",
+        "--template", str(template),
         "--metadata", f"title={title}",
+        "--metadata", f"cssroot={cssroot}",
         "--toc",
         "--toc-depth=2",
         "-o", str(html_path),
     ]
-    if template is not None:
-        cmd.extend(["--template", str(template)])
+    if quadrant:
+        cmd.extend(["--metadata", f"quadrant={quadrant}"])
 
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
@@ -243,6 +258,81 @@ def insert_exercise_iframes(html_path: Path, exercises: list[str]) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Sidebar generation
+# ---------------------------------------------------------------------------
+
+
+def generate_sidebar_html(structure: dict) -> str:
+    """Build the sidebar navigation HTML from the structure document."""
+    project = structure.get("project", {})
+    name = project.get("name", "Documentation")
+
+    section_labels = {
+        "tutorials": "Tutorials",
+        "howto": "How-to Guides",
+        "reference": "Reference",
+        "explanation": "Explanation",
+    }
+
+    topics = structure.get("topics", {})
+    sorted_topics = sorted(
+        topics.items(),
+        key=lambda item: item[1].get("order", 999),
+    )
+
+    lines = [f'<a class="site-title" href="index.html">{name}</a>']
+
+    for quadrant in QUADRANT_DIRS:
+        # Collect files for this quadrant
+        entries = []
+        for _, topic in sorted_topics:
+            entry = topic.get(quadrant)
+            if entry is None:
+                continue
+            file_html = Path(entry["file"]).with_suffix(".html").name
+            entries.append((topic["title"], f"{quadrant}/{file_html}"))
+
+        if not entries:
+            continue
+
+        lines.append(f'<div class="nav-section {quadrant}">')
+        lines.append(f'  <div class="nav-section-title">{section_labels[quadrant]}</div>')
+        lines.append("  <ul>")
+        for title, href in entries:
+            lines.append(f'    <li><a href="{href}">{title}</a></li>')
+        lines.append("  </ul>")
+        lines.append("</div>")
+
+    return "\n".join(lines)
+
+
+def inject_sidebar(html_path: Path, sidebar_html: str, current_href: str) -> None:
+    """Replace the sidebar placeholder and mark the active link."""
+    content = html_path.read_text(encoding="utf-8")
+
+    # Fix relative paths based on depth — files in subdirectories need ../
+    depth = len(html_path.parent.name.split("/")) if html_path.parent.name else 0
+    # Check if file is inside a quadrant subdirectory
+    if html_path.parent.name in QUADRANT_DIRS:
+        adjusted = sidebar_html.replace('href="', 'href="../')
+    else:
+        adjusted = sidebar_html
+
+    # Mark active link
+    if current_href:
+        adjusted = adjusted.replace(
+            f'href="{current_href}"',
+            f'href="{current_href}" class="active"',
+        )
+
+    content = content.replace(
+        "<!-- Sidebar content is injected by the build script -->",
+        adjusted,
+    )
+    html_path.write_text(content, encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
 # Build orchestration
 # ---------------------------------------------------------------------------
 
@@ -263,6 +353,19 @@ def build(diataxis_dir: Path) -> None:
         shutil.rmtree(build_dir)
     build_dir.mkdir()
 
+    # Copy standard assets from the skill bundle
+    assets_dest = build_dir / "assets"
+    assets_dest.mkdir(parents=True, exist_ok=True)
+    for asset_file in SKILL_ASSETS.glob("*.css"):
+        shutil.copy2(asset_file, assets_dest / asset_file.name)
+    print("Copied standard assets.")
+
+    # Copy project-specific assets on top if they exist
+    project_assets = diataxis_dir / "_assets"
+    if project_assets.exists():
+        shutil.copytree(project_assets, assets_dest, dirs_exist_ok=True)
+        print("Copied project assets.")
+
     # Generate landing pages
     print("Generating landing pages...")
     generate_home_page(structure, diataxis_dir)
@@ -282,6 +385,9 @@ def build(diataxis_dir: Path) -> None:
             if entry.get("exercises"):
                 file_exercises[entry["file"]] = entry["exercises"]
 
+    # Build sidebar HTML once
+    sidebar_html = generate_sidebar_html(structure)
+
     # Convert all markdown files
     template = get_pandoc_template(diataxis_dir)
     print("Converting markdown to HTML...")
@@ -289,7 +395,9 @@ def build(diataxis_dir: Path) -> None:
     # Home page
     home_md = diataxis_dir / "index.md"
     if home_md.exists():
-        convert_markdown(home_md, build_dir / "index.html", structure.get("project", {}).get("name", "Home"), template)
+        home_html = build_dir / "index.html"
+        convert_markdown(home_md, home_html, structure.get("project", {}).get("name", "Home"), template)
+        inject_sidebar(home_html, sidebar_html, "")
 
     # Quadrant landing pages and content files
     for quadrant in QUADRANT_DIRS:
@@ -301,18 +409,23 @@ def build(diataxis_dir: Path) -> None:
             html_rel = rel.with_suffix(".html")
             html_path = build_dir / html_rel
             title = md_file.stem.replace("-", " ").replace("_", " ").title()
-            convert_markdown(md_file, html_path, title, template)
+
+            # Determine cssroot for template — files in subdirs need ../
+            cssroot = "../"
+            convert_markdown(
+                md_file, html_path, title, template,
+                quadrant=quadrant,
+                cssroot=cssroot,
+            )
+
+            # Inject sidebar with correct relative paths
+            current_href = f"{quadrant}/{html_rel.name}"
+            inject_sidebar(html_path, sidebar_html, current_href)
 
             # Insert exercise iframes if applicable
             rel_str = str(rel)
             if rel_str in file_exercises:
                 insert_exercise_iframes(html_path, file_exercises[rel_str])
-
-    # Copy assets if they exist
-    assets_src = diataxis_dir / "_assets"
-    if assets_src.exists():
-        shutil.copytree(assets_src, build_dir / "assets", dirs_exist_ok=True)
-        print("Copied assets.")
 
     # Generate marimo ASGI config if there are exercises
     if exercise_map:
