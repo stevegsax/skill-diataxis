@@ -27,7 +27,7 @@ order = 1                                # Display/learning order within the pro
 # Each quadrant within a topic is optional. Only define the quadrants that
 # make sense for this topic. Not every topic needs all four.
 
-[topics.topic-slug.tutorial]
+[topics.topic-slug.tutorials]
 file = "tutorials/topic-name.md"         # Required: path relative to docs root
 status = "draft"                         # "planned", "draft", "review", "complete"
 covers = [                               # Required: specific items this file addresses

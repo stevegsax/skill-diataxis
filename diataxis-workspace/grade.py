@@ -8,6 +8,7 @@ import tomllib
 from pathlib import Path
 
 DEFAULT_ITERATION = "iteration-1"
+QUADRANT_DIRS = ("tutorials", "howto", "reference", "explanation")
 
 
 def check_file_exists(path: Path) -> bool:
@@ -35,7 +36,7 @@ def check_toml_topics(path: Path, min_count: int) -> tuple[bool, str]:
 
 
 def check_quadrant_files(output_dir: Path) -> tuple[bool, str]:
-    quadrants = ["tutorials", "howto", "reference", "explanation"]
+    quadrants = QUADRANT_DIRS
     found = []
     missing = []
     for q in quadrants:
@@ -102,7 +103,7 @@ def check_tables_in_files(dir_path: Path) -> tuple[bool, str]:
 
 def check_cross_links(output_dir: Path) -> tuple[bool, str]:
     """Check if files contain cross-references to other quadrant dirs."""
-    quadrants = ["tutorials", "howto", "reference", "explanation"]
+    quadrants = QUADRANT_DIRS
     files_with_links = 0
     files_without = []
     total = 0
@@ -182,7 +183,7 @@ def check_toml_guidance_updated(output_dir: Path) -> tuple[bool, str]:
         topics = data.get("topics", {})
         updated = []
         for slug, topic in topics.items():
-            for quad in ["tutorial", "howto", "reference", "explanation"]:
+            for quad in QUADRANT_DIRS:
                 entry = topic.get(quad)
                 if entry and "guidance" in entry:
                     guidance = entry["guidance"].lower()
@@ -204,7 +205,7 @@ def check_toml_covers_mixed(output_dir: Path) -> tuple[bool, str]:
             data = tomllib.load(f)
         topics = data.get("topics", {})
         for slug, topic in topics.items():
-            for quad in ["tutorial", "howto", "reference", "explanation"]:
+            for quad in QUADRANT_DIRS:
                 entry = topic.get(quad)
                 if entry and "covers" in entry:
                     for item in entry["covers"]:
@@ -269,7 +270,7 @@ def check_guidance_coherent(output_dir: Path) -> tuple[bool, str]:
         has_feedback_block = []
         has_revision_content = []
         for slug, topic in topics.items():
-            for quad in ["tutorial", "howto", "reference", "explanation"]:
+            for quad in QUADRANT_DIRS:
                 entry = topic.get(quad)
                 if entry and "guidance" in entry:
                     guidance = entry["guidance"]

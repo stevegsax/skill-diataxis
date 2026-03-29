@@ -310,9 +310,7 @@ def inject_sidebar(html_path: Path, sidebar_html: str, current_href: str) -> Non
     """Replace the sidebar placeholder and mark the active link."""
     content = html_path.read_text(encoding="utf-8")
 
-    # Fix relative paths based on depth — files in subdirectories need ../
-    depth = len(html_path.parent.name.split("/")) if html_path.parent.name else 0
-    # Check if file is inside a quadrant subdirectory
+    # Fix relative paths — files in subdirectories need ../
     if html_path.parent.name in QUADRANT_DIRS:
         adjusted = sidebar_html.replace('href="', 'href="../')
     else:
