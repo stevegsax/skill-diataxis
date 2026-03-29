@@ -5,8 +5,10 @@ Reads diataxis.toml, converts markdown to HTML via pandoc, generates landing
 pages and navigation, and inserts marimo iframe references.
 
 Usage:
-    python -m scripts.build [diataxis-dir]
-    python -m scripts.build [diataxis-dir] --serve
+    diataxis build
+    diataxis serve
+    diataxis serve-only
+    diataxis build -d path/to/diataxis
 """
 
 from __future__ import annotations
@@ -516,29 +518,27 @@ def serve(diataxis_dir: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Diataxis documentation build pipeline")
     parser.add_argument(
-        "diataxis_dir",
-        nargs="?",
+        "-d", "--dir",
         default="diataxis",
         help="Path to the diataxis directory (default: ./diataxis)",
     )
-    parser.add_argument(
-        "--serve",
-        action="store_true",
-        help="Start servers after building",
-    )
-    parser.add_argument(
-        "--serve-only",
-        action="store_true",
-        help="Start servers without rebuilding",
-    )
+    sub = parser.add_subparsers(dest="command")
+    sub.add_parser("build", help="Build HTML from markdown sources")
+    sub.add_parser("serve", help="Build and start local servers")
+    sub.add_parser("serve-only", help="Start servers without rebuilding")
+
     args = parser.parse_args()
+    diataxis_dir = Path(args.dir).resolve()
 
-    diataxis_dir = Path(args.diataxis_dir).resolve()
-
-    if not args.serve_only:
+    if args.command is None:
+        parser.print_help()
+        sys.exit(1)
+    elif args.command == "build":
         build(diataxis_dir)
-
-    if args.serve or args.serve_only:
+    elif args.command == "serve":
+        build(diataxis_dir)
+        serve(diataxis_dir)
+    elif args.command == "serve-only":
         serve(diataxis_dir)
 
 
