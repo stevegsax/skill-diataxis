@@ -1,0 +1,166 @@
+{
+  "metadata": {
+    "skill_name": "diataxis",
+    "skill_path": "/Users/stevengreenberg/repos-sax/skill-diataxis/skill",
+    "executor_model": "claude-opus-4-6",
+    "analyzer_model": "claude-opus-4-6",
+    "timestamp": "2026-03-29T12:00:00Z",
+    "evals_run": [1, 2, 3, 4],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "Fractions Learning Path",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 294.8,
+        "tokens": 36627,
+        "tool_calls": 17,
+        "errors": 0
+      }
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "Fractions Learning Path",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.12,
+        "passed": 1,
+        "failed": 7,
+        "total": 8,
+        "time_seconds": 111.7,
+        "tokens": 16614,
+        "tool_calls": 5,
+        "errors": 0
+      }
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "Project Documentation",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 250.6,
+        "tokens": 39453,
+        "tool_calls": 20,
+        "errors": 0
+      }
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "Project Documentation",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.86,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 242.7,
+        "tokens": 39529,
+        "tool_calls": 22,
+        "errors": 0
+      }
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "Revision Request",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 383.3,
+        "tokens": 58696,
+        "tool_calls": 27,
+        "errors": 0
+      }
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "Revision Request",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 154.1,
+        "tokens": 24773,
+        "tool_calls": 11,
+        "errors": 0
+      }
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "LLM Fine-tuning",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 780.9,
+        "tokens": 66919,
+        "tool_calls": 33,
+        "errors": 0
+      }
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "LLM Fine-tuning",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.12,
+        "passed": 1,
+        "failed": 7,
+        "total": 8,
+        "time_seconds": 309.8,
+        "tokens": 31101,
+        "tool_calls": 13,
+        "errors": 0
+      }
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0},
+      "time_seconds": {"mean": 427.4, "stddev": 224.3, "min": 250.6, "max": 780.9},
+      "tokens": {"mean": 50424, "stddev": 14437, "min": 36627, "max": 66919}
+    },
+    "without_skill": {
+      "pass_rate": {"mean": 0.43, "stddev": 0.35, "min": 0.12, "max": 0.86},
+      "time_seconds": {"mean": 204.6, "stddev": 83.5, "min": 111.7, "max": 309.8},
+      "tokens": {"mean": 28004, "stddev": 9647, "min": 16614, "max": 39529}
+    },
+    "delta": {
+      "pass_rate": "+0.57",
+      "time_seconds": "+222.8",
+      "tokens": "+22420"
+    }
+  },
+  "notes": [
+    "With-skill achieves 100% pass rate across all 4 evals vs 43% average without skill",
+    "The without-skill baseline for project-docs scored 86% because Claude spontaneously used Diataxis structure — but still lacked the structure document (diataxis.toml)",
+    "With-skill uses ~2x more tokens and time, but produces structured output with machine-readable metadata and scoring contracts",
+    "The revision eval (eval 3) is the strongest differentiator — the skill captures revision feedback in diataxis.toml before editing content, preventing future regressions",
+    "Assertion 'Content is appropriate for adult learners' passes 100% in both configurations — non-discriminating",
+    "Assertion 'Content mentions specific tools' passes in both LLM configs — non-discriminating for that eval"
+  ]
+}

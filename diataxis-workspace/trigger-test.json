@@ -1,0 +1,42 @@
+[
+  {
+    "query": "Create diataxis documentation for this flask app. The main routes are in app/routes.py and the models are in app/models.py",
+    "should_trigger": true
+  },
+  {
+    "query": "score the diataxis documentation and tell me what needs to improve. focus especially on the tutorials — i think they might be drifting into explanation territory",
+    "should_trigger": true
+  },
+  {
+    "query": "update the diataxis docs to add a new topic about authentication. we just added OAuth2 support and it needs tutorials, a how-to for configuring providers, and reference docs for the new endpoints",
+    "should_trigger": true
+  },
+  {
+    "query": "review the diataxis documentation for quality. some of the how-to guides feel more like tutorials and I want to fix the cross-contamination",
+    "should_trigger": true
+  },
+  {
+    "query": "the reference docs in diataxis/reference/ are way too narrative. they should be tables and concise descriptions. can you fix them and re-score?",
+    "should_trigger": true
+  },
+  {
+    "query": "I want to learn how to fine tune an LLM on my local computer using LoRA. I have an RTX 4090 with 24GB VRAM and I'm running Ubuntu 22.04",
+    "should_trigger": false
+  },
+  {
+    "query": "help me learn about fractions, I'm going back to school next semester and need to brush up on my math before taking calc 1",
+    "should_trigger": false
+  },
+  {
+    "query": "I need to understand kubernetes networking. can you make me a structured learning path? I know basic docker but k8s networking (services, ingress, CNI plugins) is confusing me at work",
+    "should_trigger": false
+  },
+  {
+    "query": "write a README.md for this project that explains what it does, how to install it, and the basic API",
+    "should_trigger": false
+  },
+  {
+    "query": "set up mkdocs with the material theme for this project. I want auto-generated nav from the docs/ directory structure",
+    "should_trigger": false
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "skill_name": "diataxis",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Help me learn about fractions. I'm an adult refreshing my high school math. I want exercises I can practice with.",
+      "expected_output": "A diataxis.toml structure document and at least one content file per quadrant covering basic fractions, plus at least one marimo exercise notebook.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Create diataxis documentation for this Python project",
+      "expected_output": "A diataxis.toml structure document and content files documenting the skill-diataxis project (its build pipeline, structure schema, scoring rubric, etc.)",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "The tutorial on basic operations is too abstract. Use more concrete examples with real numbers. Also add a section about mixed numbers.",
+      "expected_output": "Updated diataxis.toml with guidance reflecting the feedback, revised tutorial with concrete numeric examples, and a new or expanded section on mixed numbers.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "I want to learn how to fine tune an LLM on my local computer. Teach me how.",
+      "expected_output": "A diataxis.toml structure covering LLM fine-tuning topics (dataset prep, model selection, training config, evaluation), content across all four quadrants, and interactive marimo exercise notebooks walking through each step.",
+      "files": []
+    }
+  ]
+}

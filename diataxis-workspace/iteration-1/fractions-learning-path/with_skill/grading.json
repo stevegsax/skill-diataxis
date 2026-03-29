@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "diataxis.toml exists and is valid TOML",
+      "passed": true,
+      "evidence": "Valid TOML"
+    },
+    {
+      "text": "At least 3 topics defined in diataxis.toml",
+      "passed": true,
+      "evidence": "Found 3 topics (need 3)"
+    },
+    {
+      "text": "All 4 quadrant types (tutorial, howto, reference, explanation) have at least one file",
+      "passed": true,
+      "evidence": "All 4 quadrants present: ['tutorials', 'howto', 'reference', 'explanation']"
+    },
+    {
+      "text": "At least one marimo .py exercise notebook exists",
+      "passed": true,
+      "evidence": "Found 2 exercise(s)"
+    },
+    {
+      "text": "Tutorial files contain step-by-step instructions with visible results",
+      "passed": true,
+      "evidence": "Good: ['fraction-fundamentals.md', 'adding-subtracting.md', 'multiplying-dividing.md'], Missing steps/results: []"
+    },
+    {
+      "text": "Reference files use tables or structured lists, not narrative prose",
+      "passed": true,
+      "evidence": "With tables/lists: ['fraction-operations.md'], Without: []"
+    },
+    {
+      "text": "Cross-links exist between quadrant documents",
+      "passed": true,
+      "evidence": "8/8 files have cross-links. Missing: []"
+    },
+    {
+      "text": "Content is appropriate for adult learners (not childish language)",
+      "passed": true,
+      "evidence": "No childish language found"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,250 @@
+[project]
+name = "Fractions for Adults"
+description = "A learning path covering fractions from fundamentals through complex operations, designed for adults refreshing their high school math knowledge."
+type = "learning-path"
+audience = "Adults returning to math after a gap, refreshing high school-level fraction skills. Comfortable with basic arithmetic (addition, subtraction, multiplication, division of whole numbers)."
+prerequisites = "Whole number arithmetic, basic understanding of division as sharing/grouping."
+
+[topics.fraction-basics]
+title = "Fraction Basics"
+description = "What fractions are, how to read and write them, and how to visualize them. Covers proper fractions, improper fractions, and mixed numbers."
+complexity = "beginner"
+order = 1
+
+[topics.fraction-basics.tutorial]
+file = "tutorials/fraction-basics.md"
+status = "draft"
+covers = [
+    "Writing and reading fractions: numerator and denominator",
+    "Visualizing fractions as parts of a whole",
+    "Identifying proper fractions, improper fractions, and mixed numbers",
+    "Converting between improper fractions and mixed numbers",
+]
+detail = """Step-by-step with visual descriptions at each stage. Use number line \
+and area model analogies. Keep each step concrete with a visible result."""
+guidance = """Use first person plural. Show the result after every step. Do not \
+explain why the conversion algorithm works — link to explanation. Use LaTeX for \
+all fraction notation. Include exercises link at the end."""
+exercises = [
+    "exercises/fraction-basics.py",
+]
+
+[topics.fraction-basics.explanation]
+file = "explanation/what-fractions-represent.md"
+status = "draft"
+covers = [
+    "Why fractions exist: the need to represent parts of wholes",
+    "The relationship between fractions and division",
+    "Why the same value can be written as different fractions (equivalence)",
+    "How fractions connect to decimals and percentages",
+]
+detail = """Discursive, connecting fractions to everyday intuition and to the \
+broader number system. Aim for the 'aha' moment about equivalence."""
+guidance = """Answer 'why do fractions work this way' not 'how to compute with them'. \
+Connect to real-world examples the audience already understands (splitting a bill, \
+measuring ingredients). Use LaTeX for all math expressions."""
+
+[topics.fraction-basics.reference]
+file = "reference/fraction-terminology.md"
+status = "draft"
+covers = [
+    "Definitions: numerator, denominator, proper, improper, mixed number",
+    "Notation conventions",
+    "Equivalent fraction property",
+    "Fraction-decimal-percentage equivalence table for common values",
+]
+detail = """Tabular format. One definition per row. Include the common equivalence \
+table (halves, thirds, quarters, fifths, eighths, tenths)."""
+guidance = """Pure reference — no teaching, no narrative. Use tables throughout. \
+Use LaTeX for all mathematical notation. Link to tutorial for guided practice \
+and explanation for conceptual background."""
+
+[topics.equivalent-fractions]
+title = "Equivalent Fractions and Simplifying"
+description = "Finding equivalent fractions, simplifying to lowest terms, and finding common denominators."
+complexity = "beginner"
+prerequisites = ["fraction-basics"]
+order = 2
+
+[topics.equivalent-fractions.tutorial]
+file = "tutorials/equivalent-fractions.md"
+status = "draft"
+covers = [
+    "Generating equivalent fractions by multiplying numerator and denominator",
+    "Simplifying fractions using the GCF",
+    "Finding the least common denominator (LCD) of two fractions",
+    "Comparing fractions using common denominators",
+]
+detail = """Walk through each technique with specific numeric examples. Show \
+intermediate results. Build from generating equivalents to simplifying to \
+finding LCD."""
+guidance = """One path, no choices. Each step shows the fraction before and after. \
+Use LaTeX for all math. Link to explanation for why multiplying top and bottom \
+preserves value. Include exercises link."""
+exercises = [
+    "exercises/equivalent-fractions.py",
+]
+
+[topics.equivalent-fractions.howto]
+file = "howto/simplify-a-fraction.md"
+status = "draft"
+covers = [
+    "Simplify any fraction to lowest terms",
+    "Handle edge cases: already simplified, whole numbers, zero numerator",
+]
+detail = """Concise steps. Assume the reader knows what simplifying means and \
+wants the procedure."""
+guidance = """Title: 'How to Simplify a Fraction'. No teaching. Use LaTeX for \
+all math. Link to reference for GCF methods."""
+
+[topics.adding-subtracting]
+title = "Adding and Subtracting Fractions"
+description = "Adding and subtracting fractions with like and unlike denominators, including mixed numbers."
+complexity = "intermediate"
+prerequisites = ["equivalent-fractions"]
+order = 3
+
+[topics.adding-subtracting.tutorial]
+file = "tutorials/adding-subtracting-fractions.md"
+status = "draft"
+covers = [
+    "Adding fractions with the same denominator",
+    "Adding fractions with different denominators using LCD",
+    "Subtracting fractions (same and different denominators)",
+    "Adding and subtracting mixed numbers",
+    "Simplifying the result",
+]
+detail = """Progress from like denominators to unlike to mixed numbers. Each \
+sub-skill gets its own worked example with visible intermediate steps."""
+guidance = """Show every intermediate step — finding LCD, converting, adding, \
+simplifying. Use LaTeX for all math. Do not explain why LCD works — link to \
+explanation. Include exercises link."""
+exercises = [
+    "exercises/adding-subtracting.py",
+]
+
+[topics.adding-subtracting.howto]
+file = "howto/add-fractions-with-unlike-denominators.md"
+status = "draft"
+covers = [
+    "Add two or more fractions with different denominators",
+    "Handle mixed numbers in the sum",
+]
+detail = """Task-focused. Reader knows what adding fractions means, needs the \
+procedure for unlike denominators."""
+guidance = """Title: 'How to Add Fractions with Unlike Denominators'. No teaching. \
+Use LaTeX for all math. Link to reference for LCD lookup."""
+
+[topics.adding-subtracting.reference]
+file = "reference/fraction-addition-subtraction-rules.md"
+status = "draft"
+covers = [
+    "Rules for addition and subtraction with like denominators",
+    "Rules for addition and subtraction with unlike denominators",
+    "Rules for mixed number operations",
+    "Common errors and edge cases",
+]
+detail = """Tabular rules. Each rule as a formula with a brief illustrative example."""
+guidance = """No narrative. Use tables for rules. Each rule gets a one-line LaTeX \
+formula and a single worked micro-example. Link to how-to for procedures."""
+
+[topics.adding-subtracting.explanation]
+file = "explanation/why-common-denominators.md"
+status = "draft"
+covers = [
+    "Why you cannot add fractions with different denominators directly",
+    "The analogy to adding different units",
+    "Why finding a common denominator works mathematically",
+]
+detail = """Discursive. Use the 'adding apples and oranges' analogy and the \
+'unit conversion' analogy."""
+guidance = """Answer the 'why can't I just add across' question that every \
+learner has. Use LaTeX for all math. Connect to real-world unit conversion. \
+Link to tutorial for practice."""
+
+[topics.multiplying-dividing]
+title = "Multiplying and Dividing Fractions"
+description = "Multiplying fractions, dividing fractions (invert and multiply), and operations with mixed numbers."
+complexity = "intermediate"
+prerequisites = ["fraction-basics"]
+order = 4
+
+[topics.multiplying-dividing.tutorial]
+file = "tutorials/multiplying-dividing-fractions.md"
+status = "draft"
+covers = [
+    "Multiplying two fractions",
+    "Multiplying a fraction by a whole number",
+    "Dividing fractions using the reciprocal",
+    "Multiplying and dividing mixed numbers",
+    "Simplifying before and after multiplication",
+]
+detail = """Concrete examples for each operation. Show cross-cancellation as \
+a simplification shortcut. Build from simple to mixed numbers."""
+guidance = """Step by step. Show every intermediate product. Use LaTeX for all \
+math. Do not explain why invert-and-multiply works — link to explanation. \
+Include exercises link."""
+exercises = [
+    "exercises/multiplying-dividing.py",
+]
+
+[topics.multiplying-dividing.howto]
+file = "howto/divide-fractions.md"
+status = "draft"
+covers = [
+    "Divide any two fractions or mixed numbers",
+    "Handle division by whole numbers and vice versa",
+]
+detail = """Concise procedure. Assume competence with basic fraction notation."""
+guidance = """Title: 'How to Divide Fractions'. No teaching. Use LaTeX for all \
+math. Link to explanation for why reciprocal method works."""
+
+[topics.multiplying-dividing.explanation]
+file = "explanation/why-invert-and-multiply.md"
+status = "draft"
+covers = [
+    "Why dividing by a fraction is the same as multiplying by its reciprocal",
+    "The meaning of division as 'how many times does X fit into Y'",
+    "Visual and algebraic justifications",
+]
+detail = """Discursive. Multiple perspectives: visual (area model), algebraic \
+(multiply both sides), and intuitive (repeated subtraction)."""
+guidance = """This is the 'why does flip and multiply work' explanation. Use \
+LaTeX for all math. Connect to what division means conceptually. Link to \
+tutorial for practice."""
+
+[topics.word-problems]
+title = "Fraction Word Problems"
+description = "Applying fraction operations to real-world scenarios: recipes, measurements, proportions, and everyday calculations."
+complexity = "intermediate"
+prerequisites = ["adding-subtracting", "multiplying-dividing"]
+order = 5
+
+[topics.word-problems.tutorial]
+file = "tutorials/fraction-word-problems.md"
+status = "draft"
+covers = [
+    "Identifying which operation a word problem requires",
+    "Translating word problems into fraction expressions",
+    "Solving recipe scaling problems",
+    "Solving measurement and proportion problems",
+]
+detail = """Work through 4-5 realistic word problems end-to-end. Each problem: \
+read, identify operation, set up expression, solve, interpret answer."""
+guidance = """Real-world scenarios an adult would encounter. Use LaTeX for all \
+math. Show the translation step explicitly. Link to relevant operation \
+tutorials. Include exercises link."""
+exercises = [
+    "exercises/word-problems.py",
+]
+
+[topics.word-problems.howto]
+file = "howto/scale-a-recipe.md"
+status = "draft"
+covers = [
+    "Scale a recipe up or down using fraction multiplication",
+    "Handle mixed-number ingredient quantities",
+]
+detail = """Practical task. Reader has a recipe and a target serving count."""
+guidance = """Title: 'How to Scale a Recipe Using Fractions'. No teaching. \
+Use LaTeX for all math. Real ingredient examples."""

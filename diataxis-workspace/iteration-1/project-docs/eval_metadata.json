@@ -1,0 +1,14 @@
+{
+  "eval_id": 2,
+  "eval_name": "project-docs",
+  "prompt": "Create diataxis documentation for this Python project",
+  "assertions": [
+    {"text": "diataxis.toml exists and references actual project concepts"},
+    {"text": "Structure covers build pipeline, scoring, and structure schema topics"},
+    {"text": "How-to guide titles start with 'How to'"},
+    {"text": "Content references actual file paths or concepts from the project"},
+    {"text": "All 4 quadrant types have at least one file"},
+    {"text": "Reference docs use consistent formatting (tables or definition lists)"},
+    {"text": "Tutorial guides the user through a concrete task with visible results"}
+  ]
+}

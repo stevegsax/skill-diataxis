@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "diataxis.toml exists and is valid TOML",
+      "passed": false,
+      "evidence": "diataxis.toml not found"
+    },
+    {
+      "text": "At least 3 topics defined in diataxis.toml",
+      "passed": false,
+      "evidence": "[Errno 2] No such file or directory: '/Users/stevengreenberg/repos-sax/skill-diataxis/diataxis-workspace/iteration-2/fractions-learning-path/without_skill/outputs/diataxis.toml'"
+    },
+    {
+      "text": "All 4 quadrant types (tutorial, howto, reference, explanation) have at least one file",
+      "passed": false,
+      "evidence": "Found: []. Missing: ['tutorials', 'howto', 'reference', 'explanation']"
+    },
+    {
+      "text": "At least one marimo .py exercise notebook exists",
+      "passed": false,
+      "evidence": "No exercises/ directory"
+    },
+    {
+      "text": "Tutorial files contain step-by-step instructions with visible results",
+      "passed": false,
+      "evidence": "No tutorials directory"
+    },
+    {
+      "text": "Reference files use tables or structured lists, not narrative prose",
+      "passed": false,
+      "evidence": "Directory /Users/stevengreenberg/repos-sax/skill-diataxis/diataxis-workspace/iteration-2/fractions-learning-path/without_skill/outputs/reference not found"
+    },
+    {
+      "text": "Cross-links exist between quadrant documents",
+      "passed": false,
+      "evidence": "No files to check"
+    },
+    {
+      "text": "Math expressions use LaTeX notation with standard delimiters ($, $$, or backslash parens)",
+      "passed": false,
+      "evidence": "LaTeX: ['04-answer-key.md'], Plain math (no LaTeX): [\"01-fractions-refresher.md: ['3/4', '2/5', '7/8']\", \"03-exercises.md: ['24/36', '45/60', '23/5']\", \"02-worked-examples.md: ['42/56', '3/4', '2/9']\"]"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 8,
+    "total": 8,
+    "pass_rate": 0.0
+  }
+}

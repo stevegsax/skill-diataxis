@@ -1,0 +1,15 @@
+{
+  "eval_id": 1,
+  "eval_name": "fractions-learning-path",
+  "prompt": "Help me learn about fractions. I'm an adult refreshing my high school math. I want exercises I can practice with.",
+  "assertions": [
+    {"text": "diataxis.toml exists and is valid TOML"},
+    {"text": "At least 3 topics defined in diataxis.toml"},
+    {"text": "All 4 quadrant types (tutorial, howto, reference, explanation) have at least one file"},
+    {"text": "At least one marimo .py exercise notebook exists"},
+    {"text": "Tutorial files contain step-by-step instructions with visible results"},
+    {"text": "Reference files use tables or structured lists, not narrative prose"},
+    {"text": "Cross-links exist between quadrant documents"},
+    {"text": "Math expressions use LaTeX notation with standard delimiters ($, $$, or backslash parens)"}
+  ]
+}

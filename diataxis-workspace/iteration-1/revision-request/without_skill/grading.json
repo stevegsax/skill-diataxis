@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "diataxis.toml guidance fields were updated to capture revision feedback before content changes",
+      "passed": false,
+      "evidence": "No diataxis.toml"
+    },
+    {
+      "text": "Tutorial files contain concrete numeric examples (actual numbers, not placeholders)",
+      "passed": true,
+      "evidence": "4/4 tutorials have concrete numeric examples"
+    },
+    {
+      "text": "A mixed numbers section exists in the tutorials",
+      "passed": true,
+      "evidence": "Found mixed numbers section in adding-subtracting.md"
+    },
+    {
+      "text": "Non-tutorial files (howto, reference, explanation) were not unnecessarily modified",
+      "passed": true,
+      "evidence": "Non-tutorial files present (manual verification recommended)"
+    },
+    {
+      "text": "diataxis.toml covers field was updated to include mixed numbers",
+      "passed": false,
+      "evidence": "No diataxis.toml"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.6
+  }
+}
