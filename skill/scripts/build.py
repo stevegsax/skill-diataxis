@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import http.server
+import re
 import shutil
 import subprocess
 import sys
@@ -103,9 +104,9 @@ def generate_landing_page(quadrant: str, structure: dict, diataxis_dir: Path) ->
         entry = topic.get(quadrant)
         if entry is None:
             continue
-        file_rel = Path(entry["file"])
-        # Link is relative to the quadrant directory
-        link_target = Path("..") / file_rel
+        file_rel = Path(entry["file"]).with_suffix(".html")
+        # Link target is just the filename since we're in the same directory
+        link_target = file_rel.name
         covers = entry.get("covers", [])
         covers_text = ", ".join(covers[:3])
         if len(covers) > 3:
@@ -141,10 +142,10 @@ def generate_home_page(structure: dict, diataxis_dir: Path) -> None:
     lines.extend([
         "## Sections",
         "",
-        "- [Tutorials](tutorials/index.md) — Learn by doing",
-        "- [How-to Guides](howto/index.md) — Accomplish specific tasks",
-        "- [Reference](reference/index.md) — Technical descriptions",
-        "- [Explanation](explanation/index.md) — Background and context",
+        "- [Tutorials](tutorials/index.html) — Learn by doing",
+        "- [How-to Guides](howto/index.html) — Accomplish specific tasks",
+        "- [Reference](reference/index.html) — Technical descriptions",
+        "- [Explanation](explanation/index.html) — Background and context",
         "",
     ])
 
@@ -185,6 +186,10 @@ def convert_markdown(md_path: Path, html_path: Path, title: str, template: Path 
     if result.returncode != 0:
         print(f"  pandoc error for {md_path}: {result.stderr}", file=sys.stderr)
     else:
+        # Fix 2: Pandoc preserves .md extensions in href attributes — convert to .html
+        content = html_path.read_text(encoding="utf-8")
+        content = re.sub(r'href="([^"]*?)\.md"', r'href="\1.html"', content)
+        html_path.write_text(content, encoding="utf-8")
         print(f"  {md_path.name} -> {html_path.name}")
 
 
@@ -203,9 +208,9 @@ def collect_exercises(structure: dict) -> dict[str, str]:
             if entry is None:
                 continue
             for ex in entry.get("exercises", []):
-                # Mount path: /exercises/<stem>
+                # Mount at root level to avoid double-prefix redirect
                 stem = Path(ex).stem
-                exercises[ex] = f"/exercises/{stem}"
+                exercises[ex] = f"/{stem}"
     return exercises
 
 
@@ -217,12 +222,11 @@ def insert_exercise_iframes(html_path: Path, exercises: list[str]) -> None:
     iframe_blocks = []
     for ex in exercises:
         stem = Path(ex).stem
-        mount_path = f"/exercises/{stem}"
         iframe_blocks.append(textwrap.dedent(f"""\
             <div class="marimo-exercise">
                 <h3>Exercise: {stem.replace('-', ' ').replace('_', ' ').title()}</h3>
                 <iframe
-                    src="http://localhost:{MARIMO_PORT}{mount_path}"
+                    src="http://localhost:{MARIMO_PORT}/{stem}"
                     sandbox="allow-scripts allow-same-origin allow-downloads allow-popups allow-forms"
                     width="100%"
                     height="600"
@@ -337,9 +341,11 @@ def generate_marimo_config(diataxis_dir: Path, exercise_map: dict[str, str]) -> 
 
     lines.extend([
         "",
+        "app = app.build()",
+        "",
         'if __name__ == "__main__":',
         "    import uvicorn",
-        f'    uvicorn.run(app.build(), host="localhost", port={MARIMO_PORT})',
+        f'    uvicorn.run(app, host="localhost", port={MARIMO_PORT})',
         "",
     ])
 
@@ -363,12 +369,16 @@ def serve(diataxis_dir: Path) -> None:
     exercise_script = diataxis_dir / "_serve_exercises.py"
 
     # Start marimo server if exercises exist
+    # Use uv run so packages installed by uv are available
     marimo_proc = None
     if exercise_script.exists():
         print(f"Starting marimo server on port {MARIMO_PORT}...")
+        # Use the project root (parent of diataxis dir) as cwd so uv
+        # can find the virtualenv, and pass the script as an absolute path
+        project_root = diataxis_dir.parent
         marimo_proc = subprocess.Popen(
-            [sys.executable, str(exercise_script)],
-            cwd=str(diataxis_dir),
+            ["uv", "run", "python", str(exercise_script)],
+            cwd=str(project_root),
         )
 
     # Start static server

@@ -88,7 +88,7 @@ elements pointing to the marimo server:
 <div class="marimo-exercise">
     <h3>Exercise: Basic Operations</h3>
     <iframe
-        src="http://localhost:2718/exercises/basic-ops"
+        src="http://localhost:2718/basic-ops"
         sandbox="allow-scripts allow-same-origin allow-downloads allow-popups allow-forms"
         width="100%"
         height="600"
@@ -126,9 +126,12 @@ import marimo
 
 app = marimo.create_asgi_app()
 
-# Mount each exercise notebook at its own path
-app = app.with_app(path="/exercises/basic-ops", root="./exercises/basic-ops.py")
-app = app.with_app(path="/exercises/simplify", root="./exercises/simplify.py")
+# Mount at root level to avoid double-prefix redirects
+app = app.with_app(path="/basic-ops", root="./exercises/basic-ops.py")
+app = app.with_app(path="/simplify", root="./exercises/simplify.py")
+
+# .build() returns the callable ASGI app
+app = app.build()
 ```
 
 This runs as a separate process alongside the static file server.
