@@ -484,12 +484,9 @@ def serve(diataxis_dir: Path) -> None:
     marimo_proc = None
     if exercise_script.exists():
         print(f"Starting marimo server on port {MARIMO_PORT}...")
-        # Use the project root (parent of diataxis dir) as cwd so uv
-        # can find the virtualenv, and pass the script as an absolute path
-        project_root = diataxis_dir.parent
         marimo_proc = subprocess.Popen(
             ["uv", "run", "python", str(exercise_script)],
-            cwd=str(project_root),
+            cwd=str(diataxis_dir),
         )
 
     # Start static server
