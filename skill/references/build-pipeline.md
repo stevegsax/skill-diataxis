@@ -159,12 +159,14 @@ The `serve` command starts both servers:
 Both are started as background processes and can be stopped together.
 
 ```bash
-# Build and serve
-python -m diataxis build
-python -m diataxis serve
+# Build only
+uv run diataxis build
 
-# Or combined
-python -m diataxis build --serve
+# Build and serve
+uv run diataxis serve
+
+# Serve existing build
+uv run diataxis serve-only
 ```
 
 ---

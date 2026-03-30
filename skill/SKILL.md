@@ -184,6 +184,16 @@ The build pipeline transforms the authored content into user-facing HTML.
 
 Read `references/build-pipeline.md` for the technical details.
 
+The `diataxis` CLI requires `uv` to be installed. All commands are run via
+`uv run`:
+
+```bash
+uv run diataxis build            # Build HTML from diataxis/ directory
+uv run diataxis serve            # Build + start local servers
+uv run diataxis serve-only       # Start servers without rebuilding
+uv run diataxis build -d <path>  # Use a different diataxis directory
+```
+
 The pipeline:
 1. Reads `diataxis.toml` for the project manifest
 2. Converts markdown files to HTML via `pandoc`
@@ -191,13 +201,9 @@ The pipeline:
 4. Inserts iframe references for marimo notebooks
 5. Outputs a directory of HTML files ready to serve
 
-The marimo notebooks are served separately via `marimo run` — the HTML pages
-contain iframes pointing to the marimo server. This means the full documentation
-requires two processes: a static file server for the HTML and a marimo server for
-the interactive components.
-
-A `serve` command handles both, starting the marimo server and a Python HTTP
-server for the static content.
+The marimo notebooks are served separately — the HTML pages contain iframes
+pointing to the marimo server on port 2718. The static HTML is served on port
+8000. The `serve` command handles both.
 
 ## Directory Layout
 
