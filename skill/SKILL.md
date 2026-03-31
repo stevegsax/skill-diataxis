@@ -175,6 +175,11 @@ standard delimiters, rendered via MathJax in the final HTML. Use `$...$` or
 The build pipeline includes MathJax in the HTML template. Never write math
 as plain text like `3/4 + 1/2` when it can be expressed as `$\frac{3}{4} + \frac{1}{2}$`.
 
+**Diagrams**: Use mermaid format for all diagrams (flowcharts, sequence diagrams,
+entity-relationship diagrams, etc.). Write them as fenced code blocks with the
+`mermaid` language tag in the markdown source. The build pipeline pre-renders
+them to SVG via `mmdc` — no client-side JavaScript needed.
+
 **Exercises**: For tutorials in learning-path projects, create marimo `.py`
 notebooks. These are authored as standard marimo notebooks and served via
 `marimo run` in the final output. Each exercise file should be self-contained
