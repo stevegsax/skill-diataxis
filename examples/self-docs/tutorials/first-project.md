@@ -10,6 +10,7 @@ You will need:
 
 - `uv` (Python package manager)
 - `pandoc` (document converter)
+- `mmdc` (mermaid CLI, for diagram rendering — optional)
 - The `skill-diataxis` project cloned locally
 
 If you don't have these installed, see
@@ -148,6 +149,10 @@ You have created a Diataxis documentation project with:
 - A `diataxis.toml` structure document defining one topic
 - A tutorial following Diataxis rules (action-oriented, shows results)
 - HTML output with navigation and styling
+
+Notice the `diataxis/` directory also contains a `README.md` explaining that
+these files are output artifacts — not authoritative sources. The Diataxis
+documentation exists alongside your project's other docs, not instead of them.
 
 To learn more about the structure document, see the
 [Writing diataxis.toml](writing-diataxis-toml.html) tutorial. For the full

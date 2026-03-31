@@ -69,6 +69,25 @@ written from scratch with full knowledge of everything learned so far. This
 prevents the field from becoming a changelog and keeps it useful as a
 generation brief.
 
+## Why diataxis/ is separate and output-only
+
+A project may already have technical specs, API docs generated from code,
+architecture decision records, READMEs, or design documents. Those are
+authoritative sources for development and design. Diataxis documentation is
+different — it is a human-friendly artifact derived from the system, not the
+system itself.
+
+This distinction is why Diataxis content lives in its own `diataxis/` directory
+rather than alongside other documentation. It is strictly an endpoint: produced
+for human consumption, never consumed as input by any other process. No build
+step, CI pipeline, code generator, or LLM should read from `diataxis/` as a
+source of truth. If the code and the Diataxis docs disagree, the code is right
+and the Diataxis docs need updating.
+
+The `diataxis/` directory includes a `README.md` making this explicit, and the
+skill adds a note to the project's `CLAUDE.md` so that Claude Code sessions
+don't treat the content as authoritative.
+
 ## Parallel generation
 
 A secondary benefit of the structure-first approach: because each file's

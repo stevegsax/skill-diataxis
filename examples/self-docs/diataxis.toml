@@ -15,13 +15,13 @@ order = 1
 file = "tutorials/first-project.md"
 status = "draft"
 covers = [
-    "Installing prerequisites (uv, pandoc)",
+    "Installing prerequisites (uv, pandoc, mmdc)",
     "Creating a diataxis/ directory and diataxis.toml",
     "Adding a first topic with a tutorial file",
     "Building and viewing the HTML output",
 ]
 detail = "Step-by-step from an empty directory to a rendered page in the browser. Use a concrete example topic throughout."
-guidance = "Start with the install commands, then walk through creating diataxis.toml by hand. Keep the example topic simple — 'Getting Started with Widgets' or similar. Show the build output after each step so the learner always sees results."
+guidance = "Start with the install commands (uv, pandoc, mmdc for mermaid), then walk through creating diataxis.toml by hand. Keep the example topic simple — 'Getting Started with Widgets' or similar. Show the build output after each step so the learner always sees results. Note that the generated diataxis/ directory is output-only and includes a README.md stating this."
 exercises = ["exercises/build-your-first-project.py"]
 
 [topics.getting-started.howto]
@@ -30,10 +30,11 @@ status = "draft"
 covers = [
     "Installing uv",
     "Installing pandoc",
+    "Installing mmdc (mermaid CLI)",
     "Verifying the diataxis CLI works",
 ]
 detail = "Concise install steps for macOS and Linux. No explanation of what the tools do."
-guidance = "Title: 'How to Install and Set Up'. Assume the reader knows what uv and pandoc are. Link to the explanation doc for background."
+guidance = "Title: 'How to Install and Set Up'. Assume the reader knows what uv and pandoc are. Include mmdc for mermaid diagram rendering. Link to the explanation doc for background."
 
 [topics.structure-document]
 title = "The Structure Document"
@@ -73,9 +74,10 @@ covers = [
     "Why structure changes before content",
     "How guidance fields prevent regressions",
     "The relationship between covers and scoring",
+    "Why diataxis/ is output-only and separate from other docs",
 ]
-detail = "Discuss the design rationale. Connect to the user's experience of documentation that drifts or regresses."
-guidance = "The key insight: diataxis.toml is both the generation brief and the scoring rubric. Explain why capturing revision feedback in guidance matters — without it, regeneration can undo user-requested changes."
+detail = "Discuss the design rationale. Connect to the user's experience of documentation that drifts or regresses. Use a mermaid diagram to illustrate the revision cycle."
+guidance = "The key insight: diataxis.toml is both the generation brief and the scoring rubric. Explain why capturing revision feedback in guidance matters — without it, regeneration can undo user-requested changes. Explain that diataxis documentation is a human-facing artifact, never authoritative for development — this is why it lives in its own directory and is never an input to other processes."
 
 [topics.quadrants]
 title = "The Four Quadrants"
@@ -118,26 +120,26 @@ order = 4
 file = "howto/build-and-serve.md"
 status = "draft"
 covers = [
-    "Building HTML with diataxis build",
-    "Serving locally with diataxis serve",
+    "Building HTML with uv run diataxis build",
+    "Serving locally with uv run diataxis serve",
     "Rebuilding after content changes",
-    "Using a custom diataxis directory",
+    "Using a custom diataxis directory with -d",
 ]
-detail = "Each task gets a numbered procedure. Show the expected terminal output."
-guidance = "Title: 'How to Build and Serve Documentation'. Assume the reader has already installed uv and pandoc (link to the install how-to). Include the port numbers (8000 for static, 2718 for marimo)."
+detail = "Each task gets a numbered procedure. Show the expected terminal output. All commands use uv run."
+guidance = "Title: 'How to Build and Serve Documentation'. All commands go through uv run. The -d flag works both before and after the subcommand. Include the port numbers (8000 for static, 2718 for marimo). Note that mermaid blocks are pre-rendered to SVG automatically if mmdc is installed."
 
 [topics.build-pipeline.reference]
 file = "reference/cli-reference.md"
 status = "draft"
 covers = [
-    "diataxis build — flags and behavior",
-    "diataxis serve — flags and behavior",
-    "diataxis serve-only — flags and behavior",
-    "The -d flag for custom directories",
-    "Exit codes and error messages",
+    "uv run diataxis build — flags and behavior",
+    "uv run diataxis serve — flags and behavior",
+    "uv run diataxis serve-only — flags and behavior",
+    "The -d flag for custom directories (works before or after subcommand)",
+    "Mermaid pre-rendering behavior (automatic if mmdc is installed)",
 ]
 detail = "One subsection per subcommand. Use a consistent format: synopsis, description, flags table, examples."
-guidance = "This should look like a man page. Neutral description, no opinions. Include the default port numbers and directory path."
+guidance = "This should look like a man page. Neutral description, no opinions. Include the default port numbers and directory path. Note that mermaid diagrams are rendered to SVG in _build/assets/mermaid/ when mmdc is available."
 
 [topics.scoring]
 title = "Scoring Documentation"

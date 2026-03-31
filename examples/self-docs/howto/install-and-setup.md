@@ -34,6 +34,29 @@ Verify:
 pandoc --version
 ```
 
+## Install mmdc (mermaid CLI)
+
+mmdc renders mermaid diagram blocks to SVG during the build. Optional — if
+not installed, mermaid blocks are left as code blocks in the output.
+
+macOS:
+
+```bash
+brew install mermaid-cli
+```
+
+Linux (npm):
+
+```bash
+npm install -g @mermaid-js/mermaid-cli
+```
+
+Verify:
+
+```bash
+mmdc --version
+```
+
 ## Install the diataxis CLI
 
 From the skill-diataxis project directory:

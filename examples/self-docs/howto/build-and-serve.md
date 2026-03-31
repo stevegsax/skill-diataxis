@@ -9,7 +9,9 @@ uv run diataxis build
 ```
 
 Output appears in `diataxis/_build/`. Each markdown file becomes an HTML page
-with navigation and styling.
+with navigation and styling. If any markdown files contain ` ```mermaid ` blocks
+and `mmdc` is installed, the diagrams are pre-rendered to SVG in
+`_build/assets/mermaid/`.
 
 ## Serve locally
 
@@ -45,10 +47,12 @@ build. The `_build/` directory is replaced entirely.
 
 ## Use a custom directory
 
-If your diataxis content is not in `./diataxis`:
+If your diataxis content is not in `./diataxis`, use the `-d` flag (works
+before or after the subcommand):
 
 ```bash
 uv run diataxis build -d path/to/my-diataxis
+uv run diataxis -d path/to/my-diataxis build
 ```
 
 For the full CLI reference, see [CLI Reference](../reference/cli-reference.html).
