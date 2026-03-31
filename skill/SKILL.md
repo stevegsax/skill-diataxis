@@ -57,9 +57,11 @@ For learning path requests ("help me learn X"), explore:
 ### Step 2: Create or Update the Structure Document
 
 The structure document (`diataxis.toml`) is the source of truth for the entire
-project. It lives in the `diataxis/` directory alongside the documentation
-directories. All Diataxis content lives under `project-root/diataxis/` — separate
-from any other project files like README, source code, or other documentation.
+project. All Diataxis content — the TOML file, all markdown files, exercises,
+and build output — lives under `project-root/diataxis/`. The directory name is
+always `diataxis`, not `docs` or any other name. This matters because the build
+CLI defaults to `./diataxis` and the entire toolchain expects this path. Do not
+create documentation files in `docs/`, `documentation/`, or any other directory.
 
 Read `references/structure-schema.md` for the full TOML schema.
 
