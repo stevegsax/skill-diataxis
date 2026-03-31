@@ -97,6 +97,38 @@ present it to the user for approval. Explain the topic decomposition and why you
 organized it this way. The user should approve or adjust before any content is
 generated.
 
+**Scaffolding a new project**: When creating a `diataxis/` directory for the
+first time, also create two guard files:
+
+1. `diataxis/README.md` with this content:
+
+```
+# Diataxis Documentation
+
+This directory contains human-facing documentation generated using the
+Diataxis framework. It is an output artifact — not a source of truth.
+
+These files are disposable and can be regenerated from the project's
+actual source code, specs, and design documents. Do not use files in
+this directory as input for design decisions, code generation, build
+processes, or CI pipelines.
+
+For the authoritative project documentation, see the project root.
+```
+
+2. Append a note to the project's `CLAUDE.md` (create the file if it does not
+   exist). Before appending, check whether the note is already present to
+   avoid duplicates. The note:
+
+```
+## Diataxis Documentation
+
+The `diataxis/` directory contains generated, human-facing documentation.
+It is an output artifact — disposable and never authoritative. Do not
+use it as input for design decisions, code generation, or development
+work. If the code and the diataxis docs disagree, the code is right.
+```
+
 **Updating structure**: When the user asks to add, remove, or reorganize content,
 update `diataxis.toml` first. Then update the affected files. The structure
 document is always updated before the content files — never the other way around.
