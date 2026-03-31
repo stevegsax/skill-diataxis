@@ -27,6 +27,21 @@ that bleeds across boundaries degrades the documentation.
 Read `references/quadrants.md` for the detailed rules governing each quadrant type.
 These rules are the basis for both content generation and scoring.
 
+## Relationship to Other Documentation
+
+Diataxis documentation exists alongside — not instead of — any other project
+documentation. A project may have technical specs, API docs generated from code,
+architecture decision records, READMEs, or design documents. Those remain the
+authoritative sources for development and design.
+
+Diataxis documentation is a human-friendly artifact derived from the system. It
+teaches, guides, describes, and explains — but it is never the source of truth
+for how the system works or how it should be built. If the code and the Diataxis
+docs disagree, the code is right and the Diataxis docs need updating.
+
+Do not move, replace, or consolidate existing developer documentation into the
+Diataxis structure. The `diataxis/` directory is additive.
+
 ## Workflow
 
 Every interaction with this skill follows this sequence. Steps can be skipped if
