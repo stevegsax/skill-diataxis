@@ -34,13 +34,17 @@ documentation. A project may have technical specs, API docs generated from code,
 architecture decision records, READMEs, or design documents. Those remain the
 authoritative sources for development and design.
 
-Diataxis documentation is a human-friendly artifact derived from the system. It
-teaches, guides, describes, and explains — but it is never the source of truth
-for how the system works or how it should be built. If the code and the Diataxis
-docs disagree, the code is right and the Diataxis docs need updating.
+Diataxis documentation is a human-friendly output artifact derived from the
+system. It teaches, guides, describes, and explains — but it is never the source
+of truth for how the system works or how it should be built. If the code and the
+Diataxis docs disagree, the code is right and the Diataxis docs need updating.
 
-Do not move, replace, or consolidate existing developer documentation into the
-Diataxis structure. The `diataxis/` directory is additive.
+This output-only nature is why Diataxis content lives in its own `diataxis/`
+directory. It is strictly an endpoint — produced for human consumption, never
+consumed as input by any other process. No build step, CI pipeline, code
+generator, or other tool should read from `diataxis/` as a source. Do not move,
+replace, or consolidate existing developer documentation into the Diataxis
+structure. The `diataxis/` directory is additive.
 
 ## Workflow
 
