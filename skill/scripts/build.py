@@ -602,7 +602,11 @@ def main() -> None:
         "help": "Path to the diataxis directory (default: ./diataxis)",
     }
 
+    from importlib.metadata import version
+    pkg_version = version("skill-diataxis")
+
     parser = argparse.ArgumentParser(description="Diataxis documentation build pipeline")
+    parser.add_argument("-v", "--version", action="version", version=f"diataxis {pkg_version}")
     parser.add_argument(*dir_kwargs.pop("flags"), **dir_kwargs)
     sub = parser.add_subparsers(dest="command")
     for name, help_text in [
