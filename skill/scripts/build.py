@@ -19,6 +19,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import textwrap
 import tomllib
 from pathlib import Path
@@ -171,20 +172,94 @@ def get_pandoc_template(diataxis_dir: Path) -> Path:
     return SKILL_ASSETS / "template.html"
 
 
+MERMAID_BLOCK = re.compile(r"```mermaid\s*\n(.*?)```", re.DOTALL)
+
+
+def has_mmdc() -> bool:
+    """Check if the mermaid CLI is available."""
+    return shutil.which("mmdc") is not None
+
+
+def prerender_mermaid(md_content: str, svg_dir: Path, name_prefix: str, asset_prefix: str = "") -> str:
+    """Replace ```mermaid blocks with rendered SVG image references.
+
+    Each block is written to a temp file, rendered with mmdc, and the
+    resulting SVG is saved to svg_dir. The markdown is returned with
+    the code block replaced by an image reference pointing to the SVG.
+
+    asset_prefix is prepended to the image path (e.g., "../" for files
+    in subdirectories).
+    """
+    if not MERMAID_BLOCK.search(md_content):
+        return md_content
+
+    if not has_mmdc():
+        print("  WARNING: mermaid blocks found but mmdc is not installed", file=sys.stderr)
+        return md_content
+
+    svg_dir.mkdir(parents=True, exist_ok=True)
+    counter = 0
+
+    def render_block(match: re.Match) -> str:
+        nonlocal counter
+        counter += 1
+        mermaid_src = match.group(1)
+        svg_name = f"{name_prefix}-mermaid-{counter}.svg"
+        svg_path = svg_dir / svg_name
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as f:
+            f.write(mermaid_src)
+            mmd_path = f.name
+
+        try:
+            result = subprocess.run(
+                ["mmdc", "-i", mmd_path, "-o", str(svg_path), "-b", "transparent"],
+                capture_output=True, text=True,
+            )
+            if result.returncode != 0:
+                print(f"  WARNING: mmdc failed for block {counter}: {result.stderr}", file=sys.stderr)
+                return match.group(0)  # Leave the original block
+        finally:
+            Path(mmd_path).unlink(missing_ok=True)
+
+        return f'![diagram]({asset_prefix}assets/mermaid/{svg_name})'
+
+    return MERMAID_BLOCK.sub(render_block, md_content)
+
+
 def convert_markdown(
     md_path: Path,
     html_path: Path,
     title: str,
     template: Path,
+    build_dir: Path,
     *,
     quadrant: str | None = None,
     cssroot: str = "",
 ) -> None:
-    """Convert a single markdown file to HTML via pandoc."""
+    """Convert a single markdown file to HTML via pandoc.
+
+    If the markdown contains ```mermaid blocks, they are pre-rendered to SVG
+    and saved in build_dir/assets/mermaid/ before pandoc runs.
+    """
     html_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # Pre-render mermaid blocks if present
+    md_content = md_path.read_text(encoding="utf-8")
+    svg_dir = build_dir / "assets" / "mermaid"
+    processed = prerender_mermaid(md_content, svg_dir, md_path.stem, asset_prefix=cssroot)
+
+    if processed != md_content:
+        # Write processed markdown to a temp file for pandoc
+        tmp_md = md_path.with_suffix(".tmp.md")
+        tmp_md.write_text(processed, encoding="utf-8")
+        pandoc_input = tmp_md
+    else:
+        pandoc_input = md_path
+        tmp_md = None
+
     cmd = [
-        "pandoc", str(md_path),
+        "pandoc", str(pandoc_input),
         "--from", "markdown",
         "--to", "html5",
         "--standalone",
@@ -200,10 +275,15 @@ def convert_markdown(
         cmd.extend(["--metadata", f"quadrant={quadrant}"])
 
     result = subprocess.run(cmd, capture_output=True, text=True)
+
+    # Clean up temp file
+    if tmp_md is not None:
+        tmp_md.unlink(missing_ok=True)
+
     if result.returncode != 0:
         print(f"  pandoc error for {md_path}: {result.stderr}", file=sys.stderr)
     else:
-        # Fix 2: Pandoc preserves .md extensions in href attributes — convert to .html
+        # Pandoc preserves .md extensions in href attributes — convert to .html
         content = html_path.read_text(encoding="utf-8")
         content = re.sub(r'href="([^"]*?)\.md"', r'href="\1.html"', content)
         html_path.write_text(content, encoding="utf-8")
@@ -396,7 +476,7 @@ def build(diataxis_dir: Path) -> None:
     home_md = diataxis_dir / "index.md"
     if home_md.exists():
         home_html = build_dir / "index.html"
-        convert_markdown(home_md, home_html, structure.get("project", {}).get("name", "Home"), template)
+        convert_markdown(home_md, home_html, structure.get("project", {}).get("name", "Home"), template, build_dir)
         inject_sidebar(home_html, sidebar_html, "")
 
     # Quadrant landing pages and content files
@@ -413,7 +493,7 @@ def build(diataxis_dir: Path) -> None:
             # Determine cssroot for template — files in subdirs need ../
             cssroot = "../"
             convert_markdown(
-                md_file, html_path, title, template,
+                md_file, html_path, title, template, build_dir,
                 quadrant=quadrant,
                 cssroot=cssroot,
             )
@@ -516,16 +596,23 @@ def serve(diataxis_dir: Path) -> None:
 
 
 def main() -> None:
+    dir_kwargs = {
+        "flags": ["-d", "--dir"],
+        "default": "diataxis",
+        "help": "Path to the diataxis directory (default: ./diataxis)",
+    }
+
     parser = argparse.ArgumentParser(description="Diataxis documentation build pipeline")
-    parser.add_argument(
-        "-d", "--dir",
-        default="diataxis",
-        help="Path to the diataxis directory (default: ./diataxis)",
-    )
+    parser.add_argument(*dir_kwargs.pop("flags"), **dir_kwargs)
     sub = parser.add_subparsers(dest="command")
-    sub.add_parser("build", help="Build HTML from markdown sources")
-    sub.add_parser("serve", help="Build and start local servers")
-    sub.add_parser("serve-only", help="Start servers without rebuilding")
+    for name, help_text in [
+        ("build", "Build HTML from markdown sources"),
+        ("serve", "Build and start local servers"),
+        ("serve-only", "Start servers without rebuilding"),
+    ]:
+        sp = sub.add_parser(name, help=help_text)
+        sp.add_argument("-d", "--dir", default="diataxis",
+                        help="Path to the diataxis directory (default: ./diataxis)")
 
     args = parser.parse_args()
     diataxis_dir = Path(args.dir).resolve()

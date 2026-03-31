@@ -40,6 +40,21 @@ incorporate the feedback, adding items to `covers` if needed — the feedback
 becomes part of the contract. It persists across regeneration. It gets checked
 during scoring. It can't be silently undone.
 
+## The revision cycle
+
+The structure-first approach produces a clear cycle:
+
+```mermaid
+flowchart LR
+    A[User feedback] --> B[Update diataxis.toml]
+    B --> C[Revise content]
+    C --> D[Score]
+    D --> A
+```
+
+The structure document is always the first thing updated and the last thing
+checked. Content changes flow from it, and scoring validates against it.
+
 ## The guidance field as institutional memory
 
 The `guidance` field evolves over time. It starts as a brief for initial content
