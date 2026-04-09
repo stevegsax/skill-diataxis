@@ -11,3 +11,14 @@ wheels/
 
 # Secrets
 .envrc
+
+# Diataxis build artifacts
+_build/
+_serve_exercises.py
+examples/self-docs/index.md
+**/tutorials/index.md
+**/howto/index.md
+**/reference/index.md
+**/explanation/index.md
+
+diataxis-workspace/
