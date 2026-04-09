@@ -6,6 +6,7 @@
 |-------|----------|------|-------------|
 | `name` | Yes | string | Project name, displayed in navigation |
 | `description` | Yes | string | What the documentation covers |
+| `purpose` | Yes | string | Why the project exists and what problems it solves — drives the introductory page |
 | `type` | Yes | string | `"learning-path"` or `"project-docs"` |
 | `audience` | Yes | string | Who the reader is |
 | `prerequisites` | No | string | What the audience already knows |
@@ -52,6 +53,8 @@ Defined under `[topics.<slug>.tutorials]`, `[topics.<slug>.howto]`,
 [project]
 name = "My Project"
 description = "Documentation for My Project"
+purpose = """Explain why this project exists and what problems it solves. This \
+text drives the introductory page content."""
 type = "project-docs"
 audience = "Developers"
 

@@ -1,6 +1,12 @@
 [project]
 name = "Diataxis Documentation Skill"
 description = "How to use the skill-diataxis project to create, revise, score, and publish Diataxis-structured documentation"
+purpose = """Documentation that lives outside a structured workflow drifts: \
+tutorials rot, reference docs contradict the code, and revision feedback gets \
+lost between regeneration cycles. The Diataxis Documentation Skill gives Claude \
+Code a repeatable six-step process — scope, structure, generate, score, revise, \
+build — so that documentation stays accurate and internally consistent without \
+constant manual oversight."""
 type = "project-docs"
 audience = "Developers and technical writers using Claude Code"
 prerequisites = "Familiarity with Claude Code, uv, and markdown"

@@ -12,14 +12,19 @@ We begin with the project metadata:
 [project]
 name = "RecipeApp"
 description = "Documentation for the RecipeApp cooking platform"
+purpose = """Cooking apps accumulate recipes faster than developers can document \
+their APIs. RecipeApp's REST interface lets teams manage recipes, search by \
+ingredient, and filter by dietary restrictions — but without clear docs, \
+integrators resort to reading source code."""
 type = "project-docs"
 audience = "Developers integrating with the RecipeApp API"
 prerequisites = "Familiarity with REST APIs and JSON"
 ```
 
-The `type` field is either `"project-docs"` (documenting a codebase) or
-`"learning-path"` (teaching a subject). RecipeApp is a codebase, so we use
-`"project-docs"`.
+The `purpose` field explains why the project exists and what problems it
+solves — it drives the introductory page that readers see first. The `type`
+field is either `"project-docs"` (documenting a codebase) or `"learning-path"`
+(teaching a subject). RecipeApp is a codebase, so we use `"project-docs"`.
 
 ## Step 1: Add a topic
 
@@ -126,6 +131,10 @@ After all additions, your `diataxis.toml` looks like this:
 [project]
 name = "RecipeApp"
 description = "Documentation for the RecipeApp cooking platform"
+purpose = """Cooking apps accumulate recipes faster than developers can document \
+their APIs. RecipeApp's REST interface lets teams manage recipes, search by \
+ingredient, and filter by dietary restrictions — but without clear docs, \
+integrators resort to reading source code."""
 type = "project-docs"
 audience = "Developers integrating with the RecipeApp API"
 prerequisites = "Familiarity with REST APIs and JSON"
@@ -184,7 +193,7 @@ guidance = "Title: 'How to Search Recipes by Ingredient'. Link to the recipe API
 
 You have built a `diataxis.toml` that defines:
 
-- Project metadata with audience and prerequisites
+- Project metadata with purpose, audience, and prerequisites
 - Two topics ordered by complexity
 - Entries across three quadrants (tutorial, reference, how-to)
 - Scoring contracts via `covers` and content guidance via `guidance`

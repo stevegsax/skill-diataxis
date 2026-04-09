@@ -8,6 +8,7 @@ Usage:
     diataxis build
     diataxis serve
     diataxis serve-only
+    diataxis exercises
     diataxis build -d path/to/diataxis
 """
 
@@ -17,6 +18,7 @@ import argparse
 import http.server
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -27,6 +29,34 @@ from pathlib import Path
 QUADRANT_DIRS = ("tutorials", "howto", "reference", "explanation")
 MARIMO_PORT = 2718
 STATIC_PORT = 8000
+
+
+# ---------------------------------------------------------------------------
+# Port utilities
+# ---------------------------------------------------------------------------
+
+
+def find_available_port(start: int) -> int:
+    """Find an available port starting from *start*."""
+    port = start
+    while port < start + 100:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("localhost", port))
+                return port
+            except OSError:
+                port += 1
+    print(f"Error: no available port in range {start}-{start + 99}", file=sys.stderr)
+    sys.exit(1)
+
+
+def read_built_marimo_port(diataxis_dir: Path) -> int:
+    """Read the marimo port from the generated exercise script."""
+    script = diataxis_dir / "_serve_exercises.py"
+    if not script.exists():
+        return MARIMO_PORT
+    match = re.search(r"port=(\d+)", script.read_text(encoding="utf-8"))
+    return int(match.group(1)) if match else MARIMO_PORT
 
 
 # ---------------------------------------------------------------------------
@@ -131,16 +161,24 @@ def generate_home_page(structure: dict, diataxis_dir: Path) -> None:
     project = structure.get("project", {})
     name = project.get("name", "Documentation")
     description = project.get("description", "")
+    purpose = project.get("purpose", "")
     audience = project.get("audience", "")
+    introduction = project.get("introduction", "")
 
     lines = [
         f"# {name}",
         "",
-        description,
-        "",
     ]
+    if purpose:
+        lines.extend([purpose.strip(), ""])
+    elif description:
+        lines.extend([description, ""])
+
     if audience:
         lines.extend([f"**Audience**: {audience}", ""])
+
+    if introduction:
+        lines.extend([introduction.strip(), ""])
 
     lines.extend([
         "## Sections",
@@ -311,7 +349,7 @@ def collect_exercises(structure: dict) -> dict[str, str]:
     return exercises
 
 
-def insert_exercise_iframes(html_path: Path, exercises: list[str]) -> None:
+def insert_exercise_iframes(html_path: Path, exercises: list[str], marimo_port: int = MARIMO_PORT) -> None:
     """Append exercise iframes to an HTML file."""
     if not exercises:
         return
@@ -322,8 +360,9 @@ def insert_exercise_iframes(html_path: Path, exercises: list[str]) -> None:
         iframe_blocks.append(textwrap.dedent(f"""\
             <div class="marimo-exercise">
                 <h3>Exercise: {stem.replace('-', ' ').replace('_', ' ').title()}</h3>
+                <p class="exercise-server-note">Requires exercise server — run <code>diataxis exercises</code></p>
                 <iframe
-                    src="http://localhost:{MARIMO_PORT}/{stem}"
+                    src="http://localhost:{marimo_port}/{stem}"
                     sandbox="allow-scripts allow-same-origin allow-downloads allow-popups allow-forms"
                     width="100%"
                     height="600"
@@ -417,7 +456,7 @@ def inject_sidebar(html_path: Path, sidebar_html: str, current_href: str) -> Non
 # ---------------------------------------------------------------------------
 
 
-def build(diataxis_dir: Path) -> None:
+def build(diataxis_dir: Path, marimo_port: int = MARIMO_PORT) -> None:
     """Run the full build pipeline."""
     print(f"Building from {diataxis_dir}")
 
@@ -505,13 +544,14 @@ def build(diataxis_dir: Path) -> None:
             # Insert exercise iframes if applicable
             rel_str = str(rel)
             if rel_str in file_exercises:
-                insert_exercise_iframes(html_path, file_exercises[rel_str])
+                insert_exercise_iframes(html_path, file_exercises[rel_str], marimo_port)
 
     # Generate marimo ASGI config if there are exercises
     if exercise_map:
-        generate_marimo_config(diataxis_dir, exercise_map)
+        generate_marimo_config(diataxis_dir, exercise_map, marimo_port)
 
     print(f"Build complete: {build_dir}")
+    print(f"Open {build_dir}/index.html in your browser, or run 'diataxis serve' to start a local server.")
 
 
 # ---------------------------------------------------------------------------
@@ -519,7 +559,7 @@ def build(diataxis_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def generate_marimo_config(diataxis_dir: Path, exercise_map: dict[str, str]) -> None:
+def generate_marimo_config(diataxis_dir: Path, exercise_map: dict[str, str], marimo_port: int = MARIMO_PORT) -> None:
     """Generate a marimo ASGI app script for serving exercises."""
     lines = [
         '"""Auto-generated marimo ASGI app for serving exercises."""',
@@ -537,8 +577,10 @@ def generate_marimo_config(diataxis_dir: Path, exercise_map: dict[str, str]) -> 
         "app = app.build()",
         "",
         'if __name__ == "__main__":',
+        "    import sys",
         "    import uvicorn",
-        f'    uvicorn.run(app, host="localhost", port={MARIMO_PORT})',
+        f"    port = int(sys.argv[1]) if len(sys.argv) > 1 else {marimo_port}",
+        '    uvicorn.run(app, host="localhost", port=port)',
         "",
     ])
 
@@ -552,11 +594,20 @@ def generate_marimo_config(diataxis_dir: Path, exercise_map: dict[str, str]) -> 
 # ---------------------------------------------------------------------------
 
 
-def serve(diataxis_dir: Path) -> None:
+def serve(diataxis_dir: Path, *, rebuild: bool = True) -> None:
     """Start both static and marimo servers."""
+    # Find available ports
+    marimo_port = find_available_port(MARIMO_PORT)
+    static_port = find_available_port(STATIC_PORT)
+    if static_port == marimo_port:
+        static_port = find_available_port(static_port + 1)
+
+    if rebuild:
+        build(diataxis_dir, marimo_port=marimo_port)
+
     build_dir = diataxis_dir / "_build"
     if not build_dir.exists():
-        print("Build directory not found. Run build first.", file=sys.stderr)
+        print("Build directory not found. Run 'diataxis build' first.", file=sys.stderr)
         sys.exit(1)
 
     exercise_script = diataxis_dir / "_serve_exercises.py"
@@ -565,22 +616,26 @@ def serve(diataxis_dir: Path) -> None:
     # Use uv run so packages installed by uv are available
     marimo_proc = None
     if exercise_script.exists():
-        print(f"Starting marimo server on port {MARIMO_PORT}...")
+        built_port = read_built_marimo_port(diataxis_dir)
+        if not rebuild and marimo_port != built_port:
+            print(f"  Port {built_port} in use, exercises serving on {marimo_port}.", file=sys.stderr)
+            print("  Rebuild to update exercise URLs: diataxis build", file=sys.stderr)
+        print(f"Starting exercise server on port {marimo_port}...")
         marimo_proc = subprocess.Popen(
-            ["uv", "run", "python", str(exercise_script)],
+            ["uv", "run", "python", str(exercise_script), str(marimo_port)],
             cwd=str(diataxis_dir),
         )
 
     # Start static server
-    print(f"Starting static server on port {STATIC_PORT}...")
-    print(f"Open http://localhost:{STATIC_PORT} in your browser.")
+    print(f"Starting static server on port {static_port}...")
+    print(f"Open http://localhost:{static_port} in your browser.")
 
     class Handler(http.server.SimpleHTTPRequestHandler):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, directory=str(build_dir), **kwargs)
 
     try:
-        server = http.server.HTTPServer(("localhost", STATIC_PORT), Handler)
+        server = http.server.HTTPServer(("localhost", static_port), Handler)
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nShutting down...")
@@ -588,6 +643,30 @@ def serve(diataxis_dir: Path) -> None:
         if marimo_proc is not None:
             marimo_proc.terminate()
             marimo_proc.wait()
+
+
+def serve_exercises(diataxis_dir: Path) -> None:
+    """Start only the marimo exercise server."""
+    exercise_script = diataxis_dir / "_serve_exercises.py"
+    if not exercise_script.exists():
+        print("No exercises found. Run 'diataxis build' first.", file=sys.stderr)
+        sys.exit(1)
+
+    built_port = read_built_marimo_port(diataxis_dir)
+    port = find_available_port(built_port)
+    if port != built_port:
+        print(f"  Port {built_port} in use, using {port}.", file=sys.stderr)
+        print("  Rebuild to update exercise URLs: diataxis build", file=sys.stderr)
+
+    print(f"Starting exercise server on port {port}...")
+
+    try:
+        subprocess.run(
+            ["uv", "run", "python", str(exercise_script), str(port)],
+            cwd=str(diataxis_dir),
+        )
+    except KeyboardInterrupt:
+        print("\nShutting down...")
 
 
 # ---------------------------------------------------------------------------
@@ -613,6 +692,7 @@ def main() -> None:
         ("build", "Build HTML from markdown sources"),
         ("serve", "Build and start local servers"),
         ("serve-only", "Start servers without rebuilding"),
+        ("exercises", "Start only the exercise server (marimo)"),
     ]:
         sp = sub.add_parser(name, help=help_text)
         sp.add_argument("-d", "--dir", default="diataxis",
@@ -627,10 +707,11 @@ def main() -> None:
     elif args.command == "build":
         build(diataxis_dir)
     elif args.command == "serve":
-        build(diataxis_dir)
         serve(diataxis_dir)
     elif args.command == "serve-only":
-        serve(diataxis_dir)
+        serve(diataxis_dir, rebuild=False)
+    elif args.command == "exercises":
+        serve_exercises(diataxis_dir)
 
 
 if __name__ == "__main__":

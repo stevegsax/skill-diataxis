@@ -43,6 +43,9 @@ Create `diataxis/diataxis.toml` with your project metadata and a first topic:
 [project]
 name = "Widget Handbook"
 description = "Documentation for the Widget library"
+purpose = """Building UIs from scratch means reinventing layout, rendering, and \
+event handling every time. The Widget library provides composable building blocks \
+so developers can assemble interfaces without writing boilerplate."""
 type = "project-docs"
 audience = "Developers using the Widget API"
 
