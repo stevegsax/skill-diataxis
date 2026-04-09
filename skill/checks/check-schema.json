@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Diataxis Check Result",
+  "description": "Output schema for a single diataxis documentation check",
+  "type": "object",
+  "required": ["check", "status", "evidence", "suggestions"],
+  "additionalProperties": false,
+  "properties": {
+    "check": {
+      "type": "string",
+      "description": "Check name, matches the script filename without extension"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pass", "fail", "skip", "error"],
+      "description": "pass: check succeeded, fail: check found issues, skip: check not applicable, error: script broke"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "detail"],
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "Path relative to the diataxis directory"
+          },
+          "line": {
+            "type": ["integer", "null"],
+            "description": "Line number, null when not applicable"
+          },
+          "detail": {
+            "type": "string",
+            "description": "What was observed"
+          }
+        }
+      }
+    },
+    "suggestions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Machine-readable improvement suggestions, empty on pass/skip"
+    }
+  }
+}

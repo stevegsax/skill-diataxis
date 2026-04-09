@@ -207,8 +207,23 @@ LLM generation. Specifically:
 
 ### Step 4: Score the Documentation
 
-Scoring evaluates how well the documentation follows both the Diataxis framework
-rules and the project's own structure document.
+Scoring has two phases: deterministic checks, then qualitative LLM evaluation.
+
+**Phase 1: Deterministic checks.** Run the check suite before qualitative
+scoring:
+
+```bash
+nu checks/run-checks.nu <diataxis_dir>
+```
+
+This outputs JSON with pass/fail/skip/error results for 15 structural, format,
+quadrant rule, and cross-linking checks. If any checks fail, present the
+failures and their suggestions to the user and wait for direction before
+proceeding to Phase 2. The user may ask you to fix issues, or they may say
+"score anyway." Do not proceed to qualitative scoring silently when checks fail.
+
+**Phase 2: Qualitative scoring.** Once deterministic checks pass (or the user
+explicitly says to continue), evaluate the documentation qualitatively.
 
 Read `references/scoring.md` for the full scoring rubric and output format.
 
@@ -320,3 +335,5 @@ These files contain detailed specifications. Read them when you need the details
 - `references/structure-schema.md` — Full `diataxis.toml` schema with all fields
 - `references/scoring.md` — Scoring rubric, output format, and comparison logic
 - `references/build-pipeline.md` — Build and serve pipeline technical details
+- `checks/run-checks.nu` — Deterministic check runner (invoke with `nu checks/run-checks.nu <dir>`)
+- `checks/check-schema.json` — JSON Schema for individual check output
