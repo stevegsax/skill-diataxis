@@ -45,17 +45,41 @@ Read `diataxis.toml` and verify:
 
 Report any issues before proceeding.
 
-### 2. Generate landing pages
+### 2. Generate the site introductory page
+
+Generate `_build/index.html` from `diataxis/index.md`. This is the site root —
+the first page a reader lands on. It must answer two questions concisely:
+
+- **Why does this project exist?** What problems does it solve? Draw from the
+  `purpose` field in `diataxis.toml`.
+- **What does it do?** A brief description of what the project provides. Draw
+  from the `description` field.
+
+The introductory page is a signpost. It orients the reader and links into the
+four quadrant sections rather than explaining things in detail itself. Typical
+links:
+
+- "New here? Start with the tutorial" (points to tutorials/)
+- "Need to do X? See the how-to guides" (points to howto/)
+- "Looking up specifics? Check the reference" (points to reference/)
+- "Want to understand why? Read the explanation" (points to explanation/)
+
+The introductory page is authored (in `diataxis/index.md`), not generated — it
+reflects the project's voice and framing. The build step converts it to HTML
+like any other markdown file.
+
+### 3. Generate quadrant landing pages
 
 For each quadrant directory (`tutorials/`, `howto/`, `reference/`, `explanation/`),
 generate an `index.md` from the structure document. Landing pages contain:
+
 - A heading and brief overview of the section
 - Organized links to each document in the section, grouped by topic
 - Brief descriptions pulled from the `covers` fields
 
 Landing pages are generated, not authored. They are overwritten on each build.
 
-### 3. Convert markdown to HTML
+### 4. Convert markdown to HTML
 
 Use `pandoc` for all markdown-to-HTML conversion:
 
@@ -79,7 +103,7 @@ in the markdown source should use standard LaTeX delimiters (`$...$` for inline,
 The template provides consistent styling, navigation, MathJax configuration, and
 the iframe insertion points for marimo notebooks.
 
-### 4. Insert marimo iframe references
+### 5. Insert marimo iframe references
 
 For tutorial files that have exercises listed in `diataxis.toml`, insert iframe
 elements pointing to the marimo server:
@@ -100,7 +124,7 @@ elements pointing to the marimo server:
 The iframe src paths correspond to marimo's ASGI app mount points (see
 [Marimo Integration](#marimo-integration)).
 
-### 5. Generate site navigation
+### 6. Generate site navigation
 
 Build a navigation structure from `diataxis.toml`:
 - Top-level links to each quadrant section
@@ -110,7 +134,7 @@ Build a navigation structure from `diataxis.toml`:
 
 Inject navigation into each HTML page via the pandoc template.
 
-### 6. Copy assets
+### 7. Copy assets
 
 Copy any static assets (images, CSS, fonts) to `_build/assets/`.
 

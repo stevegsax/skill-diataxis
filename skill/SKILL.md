@@ -152,6 +152,17 @@ Once the structure is approved, generate content for each file according to its
 entry in `diataxis.toml`. The `covers`, `detail`, and `guidance` fields in the
 structure document are the brief for each file.
 
+**Introductory page**: Every Diataxis project gets an introductory page at
+`diataxis/index.md`. This is the first thing a reader sees, so it needs to
+answer two questions immediately: why does this project exist (what problems
+does it solve), and what does it do? Draw on the `purpose` and `description`
+fields from `diataxis.toml` for this content. Keep it concise — a few short
+paragraphs at most. The introductory page is a signpost, not a destination.
+It should link into the documentation (tutorials for getting started, explanation
+for deeper understanding, reference for specifics) rather than providing detailed
+explanations itself. A reader should leave the introductory page knowing whether
+this project is relevant to them and where to go next.
+
 **Parallel generation**: Because each file's requirements are fully specified in
 the structure document, files can be generated independently and in parallel.
 When spawning subagents for generation, provide each one with:
@@ -273,6 +284,7 @@ project-root/
 ├── src/                           # Project source code, etc.
 └── diataxis/                      # All Diataxis content lives here
     ├── diataxis.toml              # Source of truth
+    ├── index.md                   # Introductory page (why + what + signposts)
     ├── scores.toml                # Scoring history
     ├── tutorials/
     │   ├── index.md               # Landing page (overview, not bare list)

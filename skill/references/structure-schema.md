@@ -10,6 +10,9 @@ organized. Every content change starts with updating this file.
 [project]
 name = "Project Name"                    # Required
 description = "What this project covers" # Required
+purpose = """Why this project exists and what problems it solves. This text \
+drives the introductory page — it should be concise and orient the reader \
+quickly. Think of it as answering: 'Why should I care about this?'"""  # Required
 type = "learning-path"                   # "learning-path" or "project-docs"
 audience = "Who this is for"             # Required
 prerequisites = "What the audience already knows"  # Optional
@@ -84,6 +87,7 @@ knowledge. OK to discuss history, alternatives, tradeoffs."""
 |-------|----------|-------------|
 | `name` | Yes | Project name |
 | `description` | Yes | What the documentation covers |
+| `purpose` | Yes | Why the project exists and what problems it solves — drives the introductory page |
 | `type` | Yes | `"learning-path"` (educational) or `"project-docs"` (codebase documentation) |
 | `audience` | Yes | Who the reader is — skill level, role, context |
 | `prerequisites` | No | What the audience is expected to already know |
