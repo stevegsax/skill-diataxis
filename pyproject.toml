@@ -1,6 +1,6 @@
 [project]
 name = "skill-diataxis"
-version = "0.1.0"
+version = "0.3.0"
 description = "Diataxis documentation skill — create, revise, score, and publish structured documentation"
 readme = "README.md"
 requires-python = ">=3.13"
