@@ -1,0 +1,37 @@
+[project]
+name = "Environment Variables"
+audience = "Junior developers new to deployment"
+type = "learning-path"
+purpose = "Teach developers how environment variables work and how to use them"
+description = "A learning path covering environment variables from basics through production use"
+
+[topics.env-basics]
+title = "Environment Variable Basics"
+
+[topics.env-basics.tutorials.getting-started]
+file = "tutorials/getting-started.md"
+covers = ["What environment variables are", "Setting and reading env vars in the shell", "Using env vars in a Python script"]
+detail = "Step-by-step with shell examples and expected output at each step"
+guidance = "Use concrete variable names and values. Show the exact terminal output the learner should see."
+status = "draft"
+
+[topics.env-basics.howto.dotenv-files]
+file = "howto/dotenv-files.md"
+covers = ["Creating a .env file", "Loading .env with python-dotenv", "Keeping .env out of version control"]
+detail = "Task-focused steps, no background explanation"
+guidance = "Assume the reader already knows what env vars are. Link to the tutorial for anyone who doesn't."
+status = "draft"
+
+[topics.env-basics.reference.common-vars]
+file = "reference/common-vars.md"
+covers = ["PATH", "HOME", "SHELL", "EDITOR", "LANG", "LC_ALL"]
+detail = "Tabular with name, purpose, typical values, and which shells set them"
+guidance = "Pure description. No instructions on how to modify these."
+status = "draft"
+
+[topics.env-basics.explanation.why-env-vars]
+file = "explanation/why-env-vars.md"
+covers = ["Why configuration lives outside the code", "The twelve-factor app principle", "Security implications of hardcoded secrets"]
+detail = "Discursive, connecting env vars to broader software design principles"
+guidance = "Explain the reasoning, not the mechanics. Link to the tutorial and how-to for the practical side."
+status = "draft"

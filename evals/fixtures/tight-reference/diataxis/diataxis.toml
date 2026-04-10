@@ -1,0 +1,37 @@
+[project]
+name = "HTTP Status Codes"
+audience = "Web developers building APIs"
+type = "project-docs"
+purpose = "Document HTTP status codes for API development"
+description = "Reference-heavy documentation for HTTP status codes used in REST APIs"
+
+[topics.status-codes]
+title = "HTTP Status Codes"
+
+[topics.status-codes.tutorials.first-api]
+file = "tutorials/first-api.md"
+covers = ["Returning status codes from a Flask route", "Choosing the right code for success vs error", "Testing responses with curl"]
+detail = "Step-by-step with code and curl output at each step"
+guidance = "Use Flask. Keep it to 3 routes: GET (200), POST (201), and GET with bad ID (404)."
+status = "draft"
+
+[topics.status-codes.howto.error-handling]
+file = "howto/error-handling.md"
+covers = ["Returning structured error responses", "Mapping exceptions to status codes", "Handling validation errors (422)"]
+detail = "Task-focused with code examples"
+guidance = "Assume Flask. No teaching about what status codes mean — link to reference."
+status = "draft"
+
+[topics.status-codes.reference.codes]
+file = "reference/codes.md"
+covers = ["2xx success codes", "3xx redirection codes", "4xx client error codes", "5xx server error codes"]
+detail = "Tabular with code, name, meaning, and when to use in an API context"
+guidance = "Cover the codes developers actually encounter, not the full RFC list. Skip obscure codes like 418 or 451."
+status = "draft"
+
+[topics.status-codes.explanation.rest-semantics]
+file = "explanation/rest-semantics.md"
+covers = ["Why status codes matter for API clients", "The cost of using 200 for everything", "How status codes enable generic error handling"]
+detail = "Discursive, connecting HTTP semantics to API design quality"
+guidance = "Argue the case for correct status code usage. Use concrete examples of what breaks when codes are wrong."
+status = "draft"

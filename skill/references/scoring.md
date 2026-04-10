@@ -150,6 +150,117 @@ The most common scoring issue. Check for:
 
 ---
 
+## Prose Quality Scoring
+
+You generated this content. That means you are biased toward it — you will
+read your own sentences as clearer and tighter than they are. Compensate by
+reading every paragraph as a skeptical editor looking for fat to cut. Score
+prose quality on every file using these criteria.
+
+### Scoring stance
+
+Score like a copy editor with a red pen, not a peer reviewer giving
+encouragement. The goal is documentation that respects the reader's time. A
+paragraph that "basically works" is a 3, not a 4. Reserve 5 for prose you
+cannot shorten without losing meaning.
+
+### Criteria
+
+**Fluff and filler** (weight: high)
+
+Flag and penalize:
+
+- Throat-clearing openers: "It is important to note that", "As we mentioned
+  earlier", "In this section we will discuss"
+- Empty qualifiers: "very", "really", "quite", "just", "simply", "basically",
+  "actually", "essentially"
+- Hedging without purpose: "it can be said that", "one might consider",
+  "it is worth noting"
+- Redundant phrasing: "in order to" (use "to"), "due to the fact that" (use
+  "because"), "at this point in time" (use "now"), "the way in which" (use "how")
+- Self-referential narration: "Let's now look at", "We will explore",
+  "The following section covers" — the reader can see what the section covers
+  by reading it
+
+Every instance costs points. A file with three or more filler phrases cannot
+score above 3.
+
+**Active voice** (weight: high)
+
+Use active voice when the agent is known. Passive voice obscures who does what,
+which is the opposite of what documentation should do.
+
+- Bad: "The configuration file is read by the parser at startup"
+- Good: "The parser reads the configuration file at startup"
+- Bad: "An error will be thrown if the input is invalid"
+- Good: "The function throws an error if the input is invalid"
+
+Passive voice is acceptable when the agent genuinely does not matter ("The file
+is stored in `/tmp`") or when the subject is the focus ("The results are sorted
+by score"). But if you can name who or what performs the action, do it.
+
+A file where more than a third of sentences use unnecessary passive voice
+cannot score above 3.
+
+**Sentence economy** (weight: medium)
+
+Every sentence should earn its place. Check for:
+
+- Sentences that can be cut in half without losing meaning
+- Two sentences that say the same thing in different words
+- Paragraphs that make one point but take five sentences to get there
+- Introductory sentences that just announce what comes next
+
+If you can delete a sentence and the paragraph still makes sense, the sentence
+should not be there.
+
+**Concrete over abstract** (weight: medium)
+
+Flag vague claims that don't tell the reader anything actionable:
+
+- Bad: "This feature is useful for many scenarios"
+- Good: "Use this when you need to batch-process files without loading them all
+  into memory"
+- Bad: "Understanding this concept helps with debugging"
+- Good: "When a query returns no rows, check the join condition first — this is
+  the most common cause"
+
+A claim is concrete if the reader knows what to do differently after reading
+it. If a sentence could apply to any project or any feature, it is too vague.
+
+### Calibration examples
+
+**Score 3/5** (passable but loose):
+
+> It is important to understand that fractions represent parts of a whole. When
+> we talk about adding fractions, what we really mean is that we are combining
+> these parts together. In order to do this, the fractions need to have the same
+> denominator. This is because the denominator tells us what kind of parts we
+> are working with.
+
+Problems: "It is important to understand that" (throat-clearing), "what we
+really mean is" (filler), "In order to" (wordy), "This is because" (could be
+folded into the previous sentence), passive voice throughout.
+
+**Score 5/5** (tight, direct):
+
+> Fractions represent parts of a whole. Adding fractions combines these parts —
+> but only when they are the same kind of part. The denominator names the kind,
+> so both fractions need the same denominator before you can add the numerators.
+
+Same information, half the words. Active voice. No filler. Each sentence
+advances the explanation.
+
+### How prose quality interacts with other scores
+
+Prose quality is scored separately but compounds with other dimensions. A
+tutorial can follow every quadrant rule perfectly but still score 3 on prose
+quality if the instructions are buried in padding. Conversely, beautifully
+tight prose does not rescue a reference doc that gives step-by-step
+instructions. Both matter.
+
+---
+
 ## Output Format
 
 Scores are stored in `scores.toml` in the project root. Each scoring run is
@@ -172,6 +283,7 @@ detail_compliance = { score = 5, justification = "Step-by-step format with worke
 guidance_adherence = { score = 3, justification = "Contains a 4-paragraph explanation of why common denominators are needed. Guidance says to link to explanation doc instead." }
 cross_linking = { score = 2, justification = "No links to sibling quadrant documents." }
 quadrant_purity = { score = 3, justification = "Two sections drift into explanation territory. Paragraphs starting 'The reason this works...' should be replaced with links." }
+prose_quality = { score = 3, justification = "Multiple throat-clearing openers ('It is important to understand that', 'Let us now look at'). Step 3 uses passive voice in 4 of 6 sentences where the agent is known. The intro paragraph can be cut from 5 sentences to 2 without losing content." }
 
 [runs.files."reference/fraction-operations.md"]
 coverage = { score = 5, justification = "All items in 'covers' are addressed." }
@@ -179,6 +291,7 @@ detail_compliance = { score = 4, justification = "Mostly tabular. One section us
 guidance_adherence = { score = 5, justification = "Follows all guidance notes." }
 cross_linking = { score = 4, justification = "Links to how-to guides present. Missing link to explanation." }
 quadrant_purity = { score = 5, justification = "Pure reference — describes without instructing or explaining." }
+prose_quality = { score = 4, justification = "Mostly tight. One paragraph in the 'Operations' section uses 'in order to' twice and 'it should be noted that' once — trim these." }
 ```
 
 ---
@@ -196,10 +309,10 @@ When re-scoring after changes, compare against the most recent previous run:
 Present comparison as a summary table:
 
 ```
-File                              Coverage  Detail  Guidance  Quadrant  Overall
-tutorials/basic-ops.md            4 → 5     5 → 5   3 → 4     3 → 4    +3
-reference/fraction-operations.md  5 → 5     4 → 5   5 → 5     5 → 5    +1
-howto/add-fractions.md            NEW       NEW     NEW       NEW      (new)
+File                              Coverage  Detail  Guidance  Quadrant  Prose  Overall
+tutorials/basic-ops.md            4 → 5     5 → 5   3 → 4     3 → 4   3 → 4   +4
+reference/fraction-operations.md  5 → 5     4 → 5   5 → 5     5 → 5   4 → 5   +2
+howto/add-fractions.md            NEW       NEW     NEW       NEW     NEW    (new)
 ```
 
 Follow the table with specifics on what improved and what regressed.

@@ -24,6 +24,69 @@
       "prompt": "I want to learn how to fine tune an LLM on my local computer. Teach me how.",
       "expected_output": "A diataxis.toml structure covering LLM fine-tuning topics (dataset prep, model selection, training config, evaluation), content across all four quadrants, and interactive marimo exercise notebooks walking through each step.",
       "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Score the diataxis documentation in evals/fixtures/flabby-tutorial/diataxis/",
+      "expected_output": "A scores.toml with prose_quality scores. The tutorial (getting-started.md) should score 3 or below on prose_quality due to pervasive throat-clearing, passive voice, filler words, and redundant phrasing. The scorer should cite specific examples of flabby prose.",
+      "files": [
+        "evals/fixtures/flabby-tutorial/diataxis/diataxis.toml",
+        "evals/fixtures/flabby-tutorial/diataxis/index.md",
+        "evals/fixtures/flabby-tutorial/diataxis/tutorials/getting-started.md",
+        "evals/fixtures/flabby-tutorial/diataxis/howto/dotenv-files.md",
+        "evals/fixtures/flabby-tutorial/diataxis/reference/common-vars.md",
+        "evals/fixtures/flabby-tutorial/diataxis/explanation/why-env-vars.md"
+      ],
+      "expectations": [
+        "prose_quality score for tutorials/getting-started.md is 3 or lower",
+        "Justification for tutorials/getting-started.md cites at least 3 specific filler phrases from the text",
+        "Justification mentions passive voice as an issue in tutorials/getting-started.md",
+        "prose_quality score for reference/common-vars.md is 4 or higher",
+        "prose_quality score for explanation/why-env-vars.md is 4 or higher",
+        "A scores.toml file is created with a prose_quality field for every scored file"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Score the diataxis documentation in evals/fixtures/subtle-howto/diataxis/",
+      "expected_output": "A scores.toml with prose_quality scores. The how-to (pre-commit-linting.md) should score 3 on prose_quality — it reads OK at first glance but is riddled with passive voice and vague claims. The scorer should not be fooled by surface-level readability.",
+      "files": [
+        "evals/fixtures/subtle-howto/diataxis/diataxis.toml",
+        "evals/fixtures/subtle-howto/diataxis/index.md",
+        "evals/fixtures/subtle-howto/diataxis/howto/pre-commit-linting.md",
+        "evals/fixtures/subtle-howto/diataxis/tutorials/first-hook.md",
+        "evals/fixtures/subtle-howto/diataxis/reference/hook-types.md",
+        "evals/fixtures/subtle-howto/diataxis/explanation/why-hooks.md"
+      ],
+      "expectations": [
+        "prose_quality score for howto/pre-commit-linting.md is 3 or lower",
+        "Justification identifies passive voice as an issue in howto/pre-commit-linting.md",
+        "Justification identifies at least one vague claim (e.g. 'This tool is helpful', 'This configuration is useful')",
+        "prose_quality score for tutorials/first-hook.md is 4 or higher",
+        "prose_quality score for explanation/why-hooks.md is 4 or higher",
+        "A scores.toml file is created with a prose_quality field for every scored file"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Score the diataxis documentation in evals/fixtures/tight-reference/diataxis/",
+      "expected_output": "A scores.toml with prose_quality scores. All files should score 4 or higher on prose_quality — the prose is tight, active, and concrete throughout. The scorer should not penalize clean writing.",
+      "files": [
+        "evals/fixtures/tight-reference/diataxis/diataxis.toml",
+        "evals/fixtures/tight-reference/diataxis/index.md",
+        "evals/fixtures/tight-reference/diataxis/reference/codes.md",
+        "evals/fixtures/tight-reference/diataxis/tutorials/first-api.md",
+        "evals/fixtures/tight-reference/diataxis/howto/error-handling.md",
+        "evals/fixtures/tight-reference/diataxis/explanation/rest-semantics.md"
+      ],
+      "expectations": [
+        "prose_quality score for reference/codes.md is 4 or higher",
+        "prose_quality score for tutorials/first-api.md is 4 or higher",
+        "prose_quality score for explanation/rest-semantics.md is 4 or higher",
+        "prose_quality score for howto/error-handling.md is 4 or higher",
+        "No prose_quality score in the entire project is below 4",
+        "A scores.toml file is created with a prose_quality field for every scored file"
+      ]
     }
   ]
 }

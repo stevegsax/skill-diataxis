@@ -1,0 +1,37 @@
+[project]
+name = "Git Hooks"
+audience = "Developers who use git daily but haven't set up hooks"
+type = "project-docs"
+purpose = "Document how to use git hooks for code quality automation"
+description = "Practical documentation for setting up and managing git hooks"
+
+[topics.hooks]
+title = "Git Hooks"
+
+[topics.hooks.tutorials.first-hook]
+file = "tutorials/first-hook.md"
+covers = ["Creating a pre-commit hook", "Making it executable", "Testing it runs"]
+detail = "Step-by-step with terminal output shown"
+guidance = "Walk through creating a simple pre-commit hook that runs a linter."
+status = "draft"
+
+[topics.hooks.howto.pre-commit-linting]
+file = "howto/pre-commit-linting.md"
+covers = ["Installing pre-commit framework", "Configuring hooks in .pre-commit-config.yaml", "Running hooks manually", "Skipping hooks when needed", "Sharing hooks across a team"]
+detail = "Task-focused steps with config examples"
+guidance = "No explanation of why linting matters. Assume the reader chose to lint and just needs the setup steps."
+status = "draft"
+
+[topics.hooks.reference.hook-types]
+file = "reference/hook-types.md"
+covers = ["pre-commit", "commit-msg", "pre-push", "post-merge", "pre-rebase", "post-checkout"]
+detail = "Tabular with hook name, trigger event, arguments received, and common use cases"
+guidance = "Pure description. No setup instructions."
+status = "draft"
+
+[topics.hooks.explanation.why-hooks]
+file = "explanation/why-hooks.md"
+covers = ["Why automate checks at commit time", "Hooks vs CI: what to catch where", "The cost of context-switching on failed CI"]
+detail = "Discursive, connecting hooks to development workflow efficiency"
+guidance = "Focus on the tradeoffs, not the mechanics."
+status = "draft"

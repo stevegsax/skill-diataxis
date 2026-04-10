@@ -228,7 +228,15 @@ explicitly says to continue), evaluate the documentation qualitatively.
 
 Read `references/scoring.md` for the full scoring rubric and output format.
 
-Scoring operates at three levels:
+**Scoring mindset**: You are the same model that generated this content. That
+makes you a biased grader — you will read your own prose as clearer and
+tighter than it actually is. Counteract this by adopting the stance of a
+skeptical editor, not a supportive colleague. Assume every paragraph has fat
+to trim. A paragraph that "works fine" is a 3, not a 4. Reserve high scores
+for prose you cannot improve. When in doubt, score lower and explain what
+would earn a higher score — that gives the user actionable direction.
+
+Scoring operates at four levels:
 
 **Project level**: Is the topic decomposition sound? Are the four quadrants
 represented appropriately? Are there gaps or redundancies?
@@ -238,6 +246,11 @@ contain? Coverage completeness, detail level, guidance adherence.
 
 **Quadrant level**: Does each file follow the rules for its quadrant type?
 Cross-contamination detection (tutorial that explains, reference that instructs).
+
+**Prose quality**: Is the writing tight, direct, and active? Check every file
+for fluff, passive voice, vague claims, and sentences that can be cut without
+losing meaning. See the Prose Quality Scoring section in `references/scoring.md`
+for the full criteria and calibration examples.
 
 The scoring output is a structured TOML file (`scores.toml`) that tracks scores
 over time so the user can see whether changes improved or degraded the
