@@ -3,6 +3,7 @@ name: diataxis
 description: >
   ALWAYS use this skill if the user requests diataxis documentation. This includes
   creating, updating, reviewing, scoring, or publishing diataxis-structured content.
+allowed-tools: Bash(nu checks/run-checks.nu *)
 ---
 
 # Diataxis Documentation Skill
