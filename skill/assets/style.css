@@ -417,6 +417,14 @@ mjx-container[display="true"] {
   color: #065f46;
 }
 
+.exercise-server-note {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  padding: 0.4rem 1rem;
+  margin: 0;
+}
+
 .marimo-exercise iframe {
   display: block;
   border: none;
