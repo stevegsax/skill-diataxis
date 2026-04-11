@@ -12,9 +12,9 @@ def main [diataxis_dir: string] {
     } | flatten)
 
     if ($all_files | length) == 0 {
-        make-result "check-cross-links" "skip" [
+        print (make-result "check-cross-links" "skip" [
             (make-evidence "diataxis.toml" "no content files found")
-        ] [] | to json
+        ] [] | to json)
         return
     }
 

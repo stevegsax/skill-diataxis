@@ -7,9 +7,9 @@ def main [diataxis_dir: string] {
     let files = content-files $ref_dir
 
     if ($files | length) == 0 {
-        make-result "check-tables-in-reference" "skip" [
+        print (make-result "check-tables-in-reference" "skip" [
             (make-evidence "reference/" "no reference content files found")
-        ] [] | to json
+        ] [] | to json)
         return
     }
 

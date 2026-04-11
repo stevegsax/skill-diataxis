@@ -7,9 +7,9 @@ def main [diataxis_dir: string] {
     let files = content-files $tutorials_dir
 
     if ($files | length) == 0 {
-        make-result "check-code-examples" "skip" [
+        print (make-result "check-code-examples" "skip" [
             (make-evidence "tutorials/" "no tutorial content files found")
-        ] [] | to json
+        ] [] | to json)
         return
     }
 

@@ -6,9 +6,7 @@ use mod.nu [make-result]
 
 const CHECKS = [
     # Structural checks
-    check-toml-valid
-    check-toml-topics
-    check-purpose-field
+    check-toml-structure
     check-quadrant-files
     check-orphan-files
     check-status-consistency
@@ -16,7 +14,6 @@ const CHECKS = [
     # Format checks
     check-marimo-format
     check-latex-math
-    check-guidance-coherent
     # Quadrant rule checks
     check-howto-titles
     check-tables-in-reference
@@ -30,16 +27,37 @@ def main [diataxis_dir: string] {
     let abs_dir = ($diataxis_dir | path expand)
     let script_dir = ($env.FILE_PWD)
 
+    # Invoke each check as a subprocess. Use `complete` so we can detect three
+    # distinct failure modes: nonzero exit, empty output, and unparseable JSON.
+    # Without this, an empty stdout is silently turned into null (nu's `""
+    # | from json` returns null, not an error) and then `each` drops the null
+    # from the result list — so a broken check would vanish from the report.
     let results = ($CHECKS | each {|check|
         let script = ($script_dir | path join $"($check).nu")
-        try {
-            nu $script $abs_dir | from json
-        } catch {|err|
+        let proc = (^nu $script $abs_dir | complete)
+
+        if $proc.exit_code != 0 {
             make-result $check "error" [
-                {file: $"($check).nu", line: null, detail: $"script error: ($err.msg)"}
+                {file: $"($check).nu", line: null, detail: $"script exited with code ($proc.exit_code): ($proc.stderr | str trim)"}
             ] [
                 $"Fix the check script ($check).nu"
             ]
+        } else if ($proc.stdout | str trim | is-empty) {
+            make-result $check "error" [
+                {file: $"($check).nu", line: null, detail: "script produced empty output — check for an early-return branch that drops its result (use print to emit)"}
+            ] [
+                $"Fix the check script ($check).nu so every code path prints its result"
+            ]
+        } else {
+            try {
+                $proc.stdout | from json
+            } catch {|err|
+                make-result $check "error" [
+                    {file: $"($check).nu", line: null, detail: $"unparseable JSON output: ($err.msg)"}
+                ] [
+                    $"Fix the check script ($check).nu"
+                ]
+            }
         }
     })
 

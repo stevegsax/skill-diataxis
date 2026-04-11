@@ -3,7 +3,9 @@ name: diataxis
 description: >
   ALWAYS use this skill if the user requests diataxis documentation. This includes
   creating, updating, reviewing, scoring, or publishing diataxis-structured content.
-allowed-tools: Bash(nu checks/run-checks.nu *)
+allowed-tools:
+  - Bash(nu checks/run-checks.nu *)
+  - Bash(nu checks/check-toml-structure.nu *)
 ---
 
 # Diataxis Documentation Skill
@@ -97,6 +99,22 @@ The structure document defines:
 present it to the user for approval. Explain the topic decomposition and why you
 organized it this way. The user should approve or adjust before any content is
 generated.
+
+**Validating the structure**: After writing or modifying `diataxis.toml`, run
+the structural check immediately — do not hand-roll Python or `jq` invocations
+to spot-check the file:
+
+```bash
+nu checks/check-toml-structure.nu <diataxis_dir>
+```
+
+This validates the file against `skill/assets/diataxis-schema.json` (a JSON
+Schema) using `check-jsonschema`. It catches missing required fields, bad enum
+values (`status`, `complexity`, `type`), unknown keys, malformed slugs, TOML
+syntax errors, and labeled `REVISION FEEDBACK:` blocks in `guidance` in one
+deterministic pass. If it fails, the output gives you the exact JSON path and
+an actionable suggestion — fix the file and re-run until it passes before
+asking the user to review the structure.
 
 **Scaffolding a new project**: When creating a `diataxis/` directory for the
 first time, also create two guard files:
@@ -202,7 +220,7 @@ to HTML, formatting tables, validating structure), use the appropriate tool — 
 LLM generation. Specifically:
 - Markdown to HTML: `pandoc`
 - HTML tidying: `tidy` or `htmlq`
-- JSON/TOML manipulation: `jq`, `python`
+- Validating `diataxis.toml` structure: `nu checks/check-toml-structure.nu <dir>` (do not write ad-hoc Python or `jq` scripts for this — the check is pre-approved and covers required fields, enums, and syntax in one pass)
 - Markdown linting: `textlint`
 - XML transforms: `xmlstarlet`
 
@@ -217,7 +235,7 @@ scoring:
 nu checks/run-checks.nu <diataxis_dir>
 ```
 
-This outputs JSON with pass/fail/skip/error results for 15 structural, format,
+This outputs JSON with pass/fail/skip/error results for 12 structural, format,
 quadrant rule, and cross-linking checks. If any checks fail, present the
 failures and their suggestions to the user and wait for direction before
 proceeding to Phase 2. The user may ask you to fix issues, or they may say

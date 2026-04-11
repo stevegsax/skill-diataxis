@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sax.capital/schemas/diataxis.json",
+  "title": "Diataxis Structure Document",
+  "description": "Schema for diataxis.toml — the source of truth for a Diataxis documentation project. Validates the project metadata block and the topic hierarchy with its four quadrants.",
+  "type": "object",
+  "required": ["project", "topics"],
+  "additionalProperties": false,
+  "properties": {
+    "project": { "$ref": "#/$defs/project" },
+    "topics": { "$ref": "#/$defs/topics" }
+  },
+  "$defs": {
+    "project": {
+      "type": "object",
+      "description": "Project-level metadata. Drives the landing page and the overall scoping of the documentation.",
+      "required": ["name", "description", "purpose", "type", "audience"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable project name."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One-line statement of what the documentation covers."
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the project exists and what problems it solves. Drives the introductory page."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["learning-path", "project-docs"],
+          "description": "'learning-path' for educational material, 'project-docs' for codebase documentation."
+        },
+        "audience": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Who the reader is — skill level, role, context."
+        },
+        "prerequisites": {
+          "type": "string",
+          "description": "What the audience is expected to already know."
+        }
+      }
+    },
+    "topics": {
+      "type": "object",
+      "description": "Map of stable topic slug to topic definition. At least one topic is required.",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z0-9][a-z0-9-]*$",
+        "description": "Topic slugs must be lowercase, hyphenated, and stable across the life of the project."
+      },
+      "additionalProperties": { "$ref": "#/$defs/topic" }
+    },
+    "topic": {
+      "type": "object",
+      "description": "A topic groups related content across the four Diataxis quadrants.",
+      "required": ["title", "description", "complexity"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable topic title."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What this topic covers."
+        },
+        "complexity": {
+          "type": "string",
+          "enum": ["beginner", "intermediate", "advanced"]
+        },
+        "prerequisites": {
+          "type": "array",
+          "description": "Topic slugs this topic depends on.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          }
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Numeric position in the learning/display sequence."
+        },
+        "tutorials": { "$ref": "#/$defs/quadrant" },
+        "howto": { "$ref": "#/$defs/quadrant" },
+        "reference": { "$ref": "#/$defs/quadrant" },
+        "explanation": { "$ref": "#/$defs/quadrant" }
+      }
+    },
+    "quadrant": {
+      "type": "object",
+      "description": "A single quadrant entry within a topic. Defines the file, its status, what it must cover, and generation/scoring guidance.",
+      "required": ["file", "status", "covers", "detail", "guidance"],
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path to the content file, relative to the diataxis directory."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["planned", "draft", "review", "complete"]
+        },
+        "covers": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Specific items this file must address. Each item is a checkable claim used when scoring.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Depth, format, and scope guidance — tells the generator and scorer what 'good' looks like."
+        },
+        "guidance": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Free-form notes on do's, don'ts, cross-linking, and revision intent. Must read as coherent prose: no 'REVISION FEEDBACK:' style labels — integrate feedback into the guidance text so it carries forward on regeneration.",
+          "not": {
+            "pattern": "REVISION FEEDBACK:|REVISION:|FEEDBACK:|USER FEEDBACK:"
+          }
+        },
+        "exercises": {
+          "type": "array",
+          "description": "Marimo notebook paths linked from this file (typically tutorials only).",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

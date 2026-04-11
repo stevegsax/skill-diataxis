@@ -11,9 +11,9 @@ def main [diataxis_dir: string] {
         | flatten)
 
     if ($all_exercises | length) == 0 {
-        make-result "check-exercise-exists" "skip" [
+        print (make-result "check-exercise-exists" "skip" [
             (make-evidence "diataxis.toml" "no exercises declared")
-        ] [] | to json
+        ] [] | to json)
         return
     }
 

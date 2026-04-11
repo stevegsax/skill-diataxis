@@ -7,9 +7,9 @@ def main [diataxis_dir: string] {
     let files = content-files $howto_dir
 
     if ($files | length) == 0 {
-        make-result "check-howto-titles" "skip" [
+        print (make-result "check-howto-titles" "skip" [
             (make-evidence "howto/" "no how-to content files found")
-        ] [] | to json
+        ] [] | to json)
         return
     }
 

@@ -12,9 +12,9 @@ def main [diataxis_dir: string] {
         | uniq)
 
     if ($all_exercises | length) == 0 {
-        make-result "check-marimo-format" "skip" [
+        print (make-result "check-marimo-format" "skip" [
             (make-evidence "diataxis.toml" "no exercises declared")
-        ] [] | to json
+        ] [] | to json)
         return
     }
 
@@ -23,9 +23,9 @@ def main [diataxis_dir: string] {
     })
 
     if ($existing | length) == 0 {
-        make-result "check-marimo-format" "skip" [
+        print (make-result "check-marimo-format" "skip" [
             (make-evidence "diataxis.toml" "no exercise files exist on disk")
-        ] [] | to json
+        ] [] | to json)
         return
     }
 

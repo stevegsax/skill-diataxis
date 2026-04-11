@@ -20,3 +20,8 @@ include = ["skill*"]
 
 [tool.setuptools.package-data]
 skill = ["assets/*", "references/*"]
+
+[dependency-groups]
+dev = [
+    "check-jsonschema>=0.37.1",
+]

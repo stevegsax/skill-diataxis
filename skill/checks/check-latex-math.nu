@@ -11,9 +11,9 @@ def main [diataxis_dir: string] {
     } | flatten)
 
     if ($all_md | length) == 0 {
-        make-result "check-latex-math" "skip" [
+        print (make-result "check-latex-math" "skip" [
             (make-evidence "diataxis.toml" "no content files found")
-        ] [] | to json
+        ] [] | to json)
         return
     }
 
