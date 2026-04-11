@@ -226,6 +226,27 @@ LLM generation. Specifically:
 
 ### Step 4: Score the Documentation
 
+**Every scoring pass starts fresh.** This rule is load-bearing — skip it and
+scoring becomes theater. When the user asks for a score:
+
+1. Re-run `nu checks/run-checks.nu <diataxis_dir>`. Do this even if you
+   already ran it earlier in the same conversation. Files may have changed
+   since. The runner embeds a current timestamp in its output — that
+   timestamp is how you prove to yourself (and to the user) that the
+   result reflects the state of the files right now, not an old run.
+2. Re-read every file you intend to score. Do not rely on your memory
+   of a file from earlier in the conversation, and never substitute
+   recollection for reading. Files change; your recollection does not.
+3. Score against `diataxis.toml` as it exists right now. The `covers`,
+   `detail`, and `guidance` fields may also have changed, and they are
+   the rubric.
+4. Only after you have produced a complete fresh set of scores should
+   you open `scores.toml` to compare. Previous entries exist for
+   comparison only — never as a source to copy scores from. Copying
+   forward makes the delta zero by construction and the feature provides
+   no signal: the user asked for a score because they want to know the
+   current state of the documentation, not a recap of the last pass.
+
 Scoring has two phases: deterministic checks, then qualitative LLM evaluation.
 
 **Phase 1: Deterministic checks.** Run the check suite before qualitative
@@ -270,10 +291,12 @@ for fluff, passive voice, vague claims, and sentences that can be cut without
 losing meaning. See the Prose Quality Scoring section in `references/scoring.md`
 for the full criteria and calibration examples.
 
-The scoring output is a structured TOML file (`scores.toml`) that tracks scores
-over time so the user can see whether changes improved or degraded the
-documentation. Each scoring run is timestamped and the previous scores are
-preserved for comparison.
+The scoring output is a structured TOML file (`scores.toml`). Each pass
+appends a new timestamped `[[runs]]` entry so the user can see whether
+changes improved or degraded the documentation over time. Previous entries
+are read-only historical records used only for the diff after a fresh pass
+has been produced — they are never a source to read scores from, and you
+must not populate a new entry by copying values from an earlier one.
 
 ### Step 5: Revise
 

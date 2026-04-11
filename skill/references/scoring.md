@@ -298,7 +298,15 @@ prose_quality = { score = 4, justification = "Mostly tight. One paragraph in the
 
 ## Comparison
 
-When re-scoring after changes, compare against the most recent previous run:
+Comparison is a post-processing step, not a shortcut. Produce a complete
+fresh set of scores first: re-read each file, re-apply the rubric, write new
+justifications. Only then load the most recent previous run from
+`scores.toml` and diff against it. Never populate a new run by copying
+scores forward from a previous one — the comparison is meaningless if both
+sides come from the same source, and the user loses the signal they asked
+for when they requested a re-score.
+
+Once the fresh scores are ready, compare against the most recent previous run:
 
 - **Improved**: score went up. Report the delta and what changed.
 - **Regressed**: score went down. Flag this prominently — the user needs to know.
