@@ -330,6 +330,7 @@ The `diataxis` CLI requires `uv` to be installed. All commands are run via
 uv run diataxis build            # Build HTML from diataxis/ directory
 uv run diataxis serve            # Build + start local servers
 uv run diataxis serve-only       # Start servers without rebuilding
+uv run diataxis publish          # Rebuild and deploy to ~/Sites/<project-slug>/
 uv run diataxis build -d <path>  # Use a different diataxis directory
 ```
 
@@ -343,6 +344,14 @@ The pipeline:
 The marimo notebooks are served separately — the HTML pages contain iframes
 pointing to the marimo server on port 2718. The static HTML is served on port
 8000. The `serve` command handles both.
+
+**Publishing**: `diataxis publish` rebuilds the site and copies `_build/` to
+`~/Sites/<project-slug>/`, where `<project-slug>` is derived from `project.name`
+in `diataxis.toml`. It also regenerates `~/Sites/index.html` as a top-level
+catalog of every published project by scanning each `~/Sites/*/.diataxis-meta.json`
+manifest. Use `--sites-dir <path>` to target a directory other than `~/Sites`.
+Because publish always rebuilds first, the deployed output is guaranteed to
+match the current sources.
 
 ## Directory Layout
 

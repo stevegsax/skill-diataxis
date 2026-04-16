@@ -10,6 +10,7 @@ never generates HTML directly.
 - [Build Steps](#build-steps)
 - [Marimo Integration](#marimo-integration)
 - [Serve](#serve)
+- [Publish](#publish)
 - [Directory Structure](#directory-structure)
 
 ---
@@ -191,6 +192,65 @@ uv run diataxis serve
 
 # Serve existing build
 uv run diataxis serve-only
+```
+
+---
+
+## Publish
+
+The `publish` command deploys a built site to a user-level sites directory
+(`~/Sites/` by default) so it can be viewed alongside other published projects.
+
+```bash
+# Rebuild and deploy to ~/Sites/<project-slug>/
+uv run diataxis publish
+
+# Deploy somewhere other than ~/Sites
+uv run diataxis publish --sites-dir /path/to/sites
+```
+
+### What publish does
+
+1. **Rebuilds the site.** Publish always runs the full build first, so the
+   deployed output reflects the current sources. There is no way to publish
+   stale `_build/` contents.
+2. **Derives a slug from `project.name`.** The project name in `diataxis.toml`
+   is lowercased and any run of non-alphanumeric characters is collapsed to a
+   hyphen. For example, `"Hello World Docs"` becomes `hello-world-docs`. The
+   command fails if the slug is empty.
+3. **Copies `_build/` to `<sites-dir>/<slug>/`.** Any existing directory at
+   that destination is removed first, so re-publishing replaces the previous
+   copy cleanly.
+4. **Writes a per-project manifest.** A small JSON file at
+   `<sites-dir>/<slug>/.diataxis-meta.json` records the project name, slug,
+   and description. This is what the top-level catalog reads.
+5. **Regenerates the top-level catalog.** `<sites-dir>/index.html` is rendered
+   from the Jinja2 template at `skill/assets/sites-index.html.j2` by scanning
+   every `<sites-dir>/*/.diataxis-meta.json` manifest. Projects appear in
+   alphabetical order by slug. Projects without a manifest are ignored.
+
+### Requirements
+
+- `project.name` must be set in `diataxis.toml`. An empty or missing name is
+  an error.
+- `jinja2` is a runtime dependency (pulled in via `pyproject.toml`).
+- The destination `<sites-dir>` is created if it does not exist.
+
+### Directory layout after publishing
+
+```
+~/Sites/
+├── index.html                        # Generated catalog, overwritten on every publish
+├── hello-world-docs/
+│   ├── index.html                    # Copied from _build/
+│   ├── tutorials/
+│   ├── howto/
+│   ├── reference/
+│   ├── explanation/
+│   ├── assets/
+│   └── .diataxis-meta.json           # {name, slug, description}
+└── another-project/
+    └── ...
 ```
 
 ---
