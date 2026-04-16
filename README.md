@@ -21,7 +21,8 @@ skill-diataxis/
 │   ├── SKILL.md                     # Skill instructions
 │   ├── assets/
 │   │   ├── style.css                # Standard stylesheet
-│   │   └── template.html            # Pandoc HTML template
+│   │   ├── template.html            # Pandoc HTML template
+│   │   └── sites-index.html.j2      # Jinja2 template for ~/Sites/index.html
 │   ├── references/
 │   │   ├── quadrants.md             # Diataxis quadrant rules
 │   │   ├── structure-schema.md      # diataxis.toml schema
@@ -52,7 +53,12 @@ uv run diataxis serve-only
 
 # Specify a different directory
 uv run diataxis build -d path/to/diataxis
+
+# Publish the built site to ~/Sites/<project-slug>/ and refresh ~/Sites/index.html
+uv run diataxis publish
 ```
+
+`publish` rebuilds the site, then copies `_build/` to `~/Sites/<slug>/`, where `<slug>` is derived from `project.name` in `diataxis.toml`. It then regenerates `~/Sites/index.html` from a Jinja2 template by scanning each `~/Sites/*/.diataxis-meta.json` manifest. Pass `--sites-dir` to target a different location.
 
 ## Authoring format
 

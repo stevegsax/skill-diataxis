@@ -5,6 +5,7 @@ description = "Diataxis documentation skill — create, revise, score, and publi
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "jinja2",
     "marimo",
     "uvicorn",
 ]
@@ -19,7 +20,7 @@ package = true
 include = ["skill*"]
 
 [tool.setuptools.package-data]
-skill = ["assets/*", "references/*"]
+skill = ["assets/*", "assets/*.j2", "references/*"]
 
 [dependency-groups]
 dev = [

@@ -9,6 +9,7 @@ Usage:
     diataxis serve
     diataxis serve-only
     diataxis exercises
+    diataxis publish
     diataxis build -d path/to/diataxis
 """
 
@@ -16,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import http.server
+import json
 import re
 import shutil
 import socket
@@ -670,6 +672,78 @@ def serve_exercises(diataxis_dir: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Publish
+# ---------------------------------------------------------------------------
+
+
+SITES_MANIFEST = ".diataxis-meta.json"
+
+
+def slugify(value: str) -> str:
+    """Lowercase, replace runs of non-alphanumerics with hyphens, trim ends."""
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    if not slug:
+        raise ValueError(f"cannot slugify {value!r}")
+    return slug
+
+
+def publish(diataxis_dir: Path, sites_dir: Path) -> None:
+    """Build the site, copy it to sites_dir/<slug>/, and regenerate the top-level index."""
+    structure = read_structure(diataxis_dir)
+    project = structure.get("project", {})
+    name = project.get("name")
+    if not name:
+        print("Error: project.name is required in diataxis.toml", file=sys.stderr)
+        sys.exit(1)
+
+    build(diataxis_dir)
+    build_dir = diataxis_dir / "_build"
+
+    slug = slugify(name)
+    sites_dir.mkdir(parents=True, exist_ok=True)
+    dest = sites_dir / slug
+
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(build_dir, dest)
+    print(f"Published {name} → {dest}")
+
+    manifest = {
+        "name": name,
+        "slug": slug,
+        "description": project.get("description", ""),
+    }
+    (dest / SITES_MANIFEST).write_text(
+        json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+    )
+
+    generate_sites_index(sites_dir)
+
+
+def generate_sites_index(sites_dir: Path) -> None:
+    """Render sites_dir/index.html from the Jinja2 template, scanning published projects."""
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+    projects = []
+    for meta_file in sorted(sites_dir.glob(f"*/{SITES_MANIFEST}")):
+        try:
+            projects.append(json.loads(meta_file.read_text(encoding="utf-8")))
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"  WARNING: skipping {meta_file}: {exc}", file=sys.stderr)
+
+    env = Environment(
+        loader=FileSystemLoader(str(SKILL_ASSETS)),
+        autoescape=select_autoescape(["html", "j2"]),
+    )
+    template = env.get_template("sites-index.html.j2")
+    html = template.render(projects=projects)
+
+    index_path = sites_dir / "index.html"
+    index_path.write_text(html, encoding="utf-8")
+    print(f"Updated {index_path} ({len(projects)} project{'s' if len(projects) != 1 else ''})")
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -693,10 +767,17 @@ def main() -> None:
         ("serve", "Build and start local servers"),
         ("serve-only", "Start servers without rebuilding"),
         ("exercises", "Start only the exercise server (marimo)"),
+        ("publish", "Copy the built site to ~/Sites/<project-slug>/ and refresh ~/Sites/index.html"),
     ]:
         sp = sub.add_parser(name, help=help_text)
         sp.add_argument("-d", "--dir", default="diataxis",
                         help="Path to the diataxis directory (default: ./diataxis)")
+        if name == "publish":
+            sp.add_argument(
+                "--sites-dir",
+                default=str(Path.home() / "Sites"),
+                help="Target sites directory (default: ~/Sites)",
+            )
 
     args = parser.parse_args()
     diataxis_dir = Path(args.dir).resolve()
@@ -712,6 +793,8 @@ def main() -> None:
         serve(diataxis_dir, rebuild=False)
     elif args.command == "exercises":
         serve_exercises(diataxis_dir)
+    elif args.command == "publish":
+        publish(diataxis_dir, Path(args.sites_dir).expanduser().resolve())
 
 
 if __name__ == "__main__":
