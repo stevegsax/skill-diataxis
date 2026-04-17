@@ -132,7 +132,7 @@ covers = [
     "Using a custom diataxis directory with -d",
 ]
 detail = "Each task gets a numbered procedure. Show the expected terminal output. All commands use uv run."
-guidance = "Title: 'How to Build and Serve Documentation'. All commands go through uv run. The -d flag works both before and after the subcommand. Include the port numbers (8000 for static, 2718 for marimo). Note that mermaid blocks are pre-rendered to SVG automatically if mmdc is installed."
+guidance = "Title: 'How to Build and Serve Documentation'. All commands go through uv run. The -d flag is per-subcommand — it goes after the subcommand name. Serve starts a single static server on port 8000; exercises run in the browser via Pyodide, so there is no separate marimo process. Note that mermaid blocks are pre-rendered to SVG automatically if mmdc is installed."
 
 [topics.build-pipeline.reference]
 file = "reference/cli-reference.md"
@@ -141,11 +141,13 @@ covers = [
     "uv run diataxis build — flags and behavior",
     "uv run diataxis serve — flags and behavior",
     "uv run diataxis serve-only — flags and behavior",
-    "The -d flag for custom directories (works before or after subcommand)",
+    "uv run diataxis publish — flags and behavior",
+    "The -d flag for custom directories (per-subcommand)",
+    "WASM exercise export and mtime-based caching",
     "Mermaid pre-rendering behavior (automatic if mmdc is installed)",
 ]
 detail = "One subsection per subcommand. Use a consistent format: synopsis, description, flags table, examples."
-guidance = "This should look like a man page. Neutral description, no opinions. Include the default port numbers and directory path. Note that mermaid diagrams are rendered to SVG in _build/assets/mermaid/ when mmdc is available."
+guidance = "This should look like a man page. Neutral description, no opinions. Include the default static port (8000) and directory path. Document that the -d flag is per-subcommand and must follow the subcommand name. Note that mermaid diagrams are rendered to SVG in _build/assets/mermaid/ when mmdc is available, and that exercises are exported as self-contained WASM bundles under _build/exercises/ with mtime-based caching across rebuilds. Cross-link to the build-and-serve how-to and install-and-setup how-to."
 
 [topics.scoring]
 title = "Scoring Documentation"

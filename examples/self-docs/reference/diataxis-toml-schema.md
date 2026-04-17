@@ -36,7 +36,7 @@ Defined under `[topics.<slug>.tutorials]`, `[topics.<slug>.howto]`,
 | `covers` | Yes | array of strings | Items this file must address (scoring contract) |
 | `detail` | Yes | string | Depth, format, and scope guidance |
 | `guidance` | Yes | string | Notes for content generation and scoring |
-| `exercises` | No | array of strings | Marimo notebook paths (typically tutorials only) |
+| `exercises` | No | array | Marimo notebook references (typically tutorials only). Each entry is either a path string or a table `{ file, title?, height? }` for per-exercise overrides |
 
 ## Status values
 

@@ -5,33 +5,52 @@ All commands are run via `uv run`.
 ## Synopsis
 
 ```
-uv run diataxis [-h] [-d DIR] {build,serve,serve-only} ...
+uv run diataxis [-h] [-v] {build,serve,serve-only,publish} [-d DIR] ...
 ```
 
 ## Global options
 
-The `-d` flag works both before and after the subcommand.
+| Flag | Description |
+|------|-------------|
+| `-h`, `--help` | Show help and exit |
+| `-v`, `--version` | Print the `diataxis` version and exit |
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-d`, `--dir` | `./diataxis` | Path to the diataxis directory |
-| `-h`, `--help` | | Show help and exit |
+The `-d`/`--dir` flag is defined per subcommand, not at the top level. It
+must appear after the subcommand name.
 
 ## diataxis build
 
 Build HTML from markdown sources.
 
-Reads `diataxis.toml`, validates the structure, generates landing pages,
-converts markdown to HTML via pandoc, injects sidebar navigation, and inserts
-marimo exercise iframes.
-
-If `mmdc` is installed and markdown files contain ` ```mermaid ` blocks, the
-diagrams are pre-rendered to SVG and saved in `_build/assets/mermaid/`. If
-`mmdc` is not installed, mermaid blocks are left as-is in the output.
+Reads `diataxis.toml`, validates that every referenced content and exercise
+file exists, generates quadrant landing pages, converts markdown to HTML via
+`pandoc`, exports each marimo exercise to a self-contained WASM bundle under
+`_build/exercises/<stem>/`, injects sidebar navigation, and inserts iframe
+references pointing at the exercise bundles.
 
 Output is written to `<diataxis-dir>/_build/`.
 
-**Example:**
+### Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-d`, `--dir` | `./diataxis` | Path to the diataxis directory |
+
+### Behavior notes
+
+- **Validation is fatal.** Missing content files, missing exercise files, or
+  exercise stem collisions abort the build with a non-zero exit.
+- **Mermaid pre-rendering.** If `mmdc` is on `PATH`, ` ```mermaid ` blocks are
+  pre-rendered to SVG in `_build/assets/mermaid/`. If it is not, blocks are
+  left as-is and a warning is printed.
+- **WASM export caching.** The `_build/exercises/` subtree is preserved
+  across rebuilds. An exercise is re-exported only when its source `.py` is
+  newer than the previously exported `index.html`. Unchanged exercises are
+  reused.
+- **Marimo is required for exercises.** When `diataxis.toml` references any
+  exercise, `marimo` must be on `PATH`. A missing binary is a fatal error.
+
+### Example
 
 ```bash
 uv run diataxis build
@@ -40,20 +59,24 @@ uv run diataxis build -d examples/self-docs
 
 ## diataxis serve
 
-Build and start local servers.
+Build and start a local static server.
 
-Runs the full build, then starts:
+Runs the full build, then starts a single HTTP server on `localhost:8000`
+rooted at `_build/`. Exercises run in the browser via Pyodide — no separate
+process is required.
 
-| Server | Port | Purpose |
-|--------|------|---------|
-| Static HTTP | 8000 | Serves `_build/` directory |
-| Marimo ASGI | 2718 | Serves interactive exercise notebooks |
+### Flags
 
-The marimo server only starts if exercises are defined in `diataxis.toml`.
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-d`, `--dir` | `./diataxis` | Path to the diataxis directory |
 
-Press Ctrl+C to stop both servers.
+If port 8000 is in use, the next available port up to 8099 is selected and
+reported on startup.
 
-**Example:**
+Press Ctrl+C to stop the server.
+
+### Example
 
 ```bash
 uv run diataxis serve
@@ -61,12 +84,58 @@ uv run diataxis serve
 
 ## diataxis serve-only
 
-Start servers without rebuilding.
+Start the static server without rebuilding. Requires a previous build
+(`_build/` must exist).
 
-Requires a previous build (`_build/` must exist).
+### Flags
 
-**Example:**
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-d`, `--dir` | `./diataxis` | Path to the diataxis directory |
+
+### Example
 
 ```bash
 uv run diataxis serve-only
 ```
+
+## diataxis publish
+
+Rebuild the site and copy it to a user-level sites directory so it can be
+viewed alongside other published projects.
+
+The project name from `diataxis.toml` is lowercased and non-alphanumeric runs
+are collapsed to hyphens to form a slug. `_build/` is copied to
+`<sites-dir>/<slug>/`; any existing directory at that path is replaced
+atomically. A per-project manifest (`.diataxis-meta.json`) is written, and
+`<sites-dir>/index.html` is regenerated from every project's manifest.
+
+### Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-d`, `--dir` | `./diataxis` | Path to the diataxis directory |
+| `--sites-dir` | `~/Sites` | Target sites directory |
+
+### Example
+
+```bash
+uv run diataxis publish
+uv run diataxis publish --sites-dir /path/to/sites
+```
+
+## Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | Fatal error (missing files, invalid `diataxis.toml`, missing `marimo` when exercises are present, etc.) |
+
+## See also
+
+- [How to Build and Serve Documentation](../howto/build-and-serve.html) — the
+  task-focused walkthrough for the same commands.
+- [How to Install and Set Up](../howto/install-and-setup.html) — installing
+  `uv`, `pandoc`, `mmdc`, and the `diataxis` CLI.
+- [diataxis.toml Schema](diataxis-toml-schema.html) — the manifest these
+  commands read.

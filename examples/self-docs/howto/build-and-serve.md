@@ -19,16 +19,15 @@ and `mmdc` is installed, the diagrams are pre-rendered to SVG in
 uv run diataxis serve
 ```
 
-This builds first, then starts two servers:
+This builds first, then starts a static file server on
+`http://localhost:8000`. Exercises run in the browser via Pyodide, so there
+is no separate server process.
 
-- Static file server on `http://localhost:8000`
-- Marimo exercise server on `http://localhost:2718` (if exercises exist)
-
-Open `http://localhost:8000` in your browser. Press Ctrl+C to stop both servers.
+Open `http://localhost:8000` in your browser. Press Ctrl+C to stop the server.
 
 ## Serve without rebuilding
 
-If you've already built and just want to restart the servers:
+If you've already built and just want to restart the server:
 
 ```bash
 uv run diataxis serve-only
@@ -47,12 +46,11 @@ build. The `_build/` directory is replaced entirely.
 
 ## Use a custom directory
 
-If your diataxis content is not in `./diataxis`, use the `-d` flag (works
-before or after the subcommand):
+If your diataxis content is not in `./diataxis`, pass `-d` after the
+subcommand:
 
 ```bash
 uv run diataxis build -d path/to/my-diataxis
-uv run diataxis -d path/to/my-diataxis build
 ```
 
 For the full CLI reference, see [CLI Reference](../reference/cli-reference.html).
