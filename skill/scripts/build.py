@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import http.server
 import json
+import os
 import re
 import shutil
 import socket
@@ -26,10 +27,42 @@ import sys
 import tempfile
 import textwrap
 import tomllib
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import NoReturn
 
-QUADRANT_DIRS = ("tutorials", "howto", "reference", "explanation")
 STATIC_PORT = 8000
+
+QUADRANT_META: dict[str, dict[str, str]] = {
+    "tutorials": {
+        "label": "Tutorials",
+        "description": "Learn by doing — guided lessons that take you through a topic step by step.",
+    },
+    "howto": {
+        "label": "How-to Guides",
+        "description": "Practical directions for accomplishing specific tasks.",
+    },
+    "reference": {
+        "label": "Reference",
+        "description": "Technical descriptions and specifications.",
+    },
+    "explanation": {
+        "label": "Explanation",
+        "description": "Background, context, and deeper understanding.",
+    },
+}
+QUADRANT_DIRS = tuple(QUADRANT_META.keys())
+
+
+def humanize(stem: str) -> str:
+    """Turn a file stem into a display title ('basic-ops' → 'Basic Ops')."""
+    return stem.replace("-", " ").replace("_", " ").title()
+
+
+def fail(msg: str, code: int = 1) -> NoReturn:
+    """Write *msg* to stderr and exit."""
+    print(msg, file=sys.stderr)
+    sys.exit(code)
 
 
 # ---------------------------------------------------------------------------
@@ -51,8 +84,7 @@ def find_available_port(start: int) -> int:
                 return port
             except OSError:
                 port += 1
-    print(f"Error: no available port in range {start}-{start + 99}", file=sys.stderr)
-    sys.exit(1)
+    fail(f"Error: no available port in range {start}-{start + 99}")
 
 
 # ---------------------------------------------------------------------------
@@ -63,8 +95,7 @@ def find_available_port(start: int) -> int:
 def read_structure(diataxis_dir: Path) -> dict:
     toml_path = diataxis_dir / "diataxis.toml"
     if not toml_path.exists():
-        print(f"Error: {toml_path} not found", file=sys.stderr)
-        sys.exit(1)
+        fail(f"Error: {toml_path} not found")
     with open(toml_path, "rb") as f:
         return tomllib.load(f)
 
@@ -95,7 +126,7 @@ def normalize_exercise(ex: str | dict) -> dict:
     return {
         "file": file,
         "stem": stem,
-        "title": title or stem.replace("-", " ").replace("_", " ").title(),
+        "title": title or humanize(stem),
         "height": height or DEFAULT_EXERCISE_HEIGHT,
     }
 
@@ -105,33 +136,46 @@ def normalize_exercise(ex: str | dict) -> dict:
 # ---------------------------------------------------------------------------
 
 
+def iter_entries(structure: dict):
+    """Yield (topic_slug, quadrant, entry) for every defined quadrant entry."""
+    for topic_slug, topic in structure.get("topics", {}).items():
+        for quadrant in QUADRANT_DIRS:
+            entry = topic.get(quadrant)
+            if entry is not None:
+                yield topic_slug, quadrant, entry
+
+
 def validate(structure: dict, diataxis_dir: Path) -> tuple[list[str], list[str]]:
-    """Check that referenced files exist.
+    """Check that referenced files exist and exercise stems don't collide.
 
     Returns (errors, warnings). Errors fail the build; warnings don't.
-    Missing referenced content or exercise files are errors because they
-    produce a broken site silently otherwise.
+    Missing referenced content or exercise files would otherwise produce a
+    silently broken site.
     """
     errors: list[str] = []
     warnings: list[str] = []
-    topics = structure.get("topics", {})
-    for topic_slug, topic in topics.items():
-        for quadrant in QUADRANT_DIRS:
-            entry = topic.get(quadrant)
-            if entry is None:
-                continue
-            file_path = diataxis_dir / entry["file"]
-            if not file_path.exists():
+    seen_stems: dict[str, str] = {}  # stem -> first file that claimed it
+
+    for topic_slug, quadrant, entry in iter_entries(structure):
+        if not (diataxis_dir / entry["file"]).exists():
+            errors.append(
+                f"Missing content: {entry['file']} (topic: {topic_slug}, quadrant: {quadrant})"
+            )
+        for ex in entry.get("exercises", []):
+            ex_info = normalize_exercise(ex)
+            if not (diataxis_dir / ex_info["file"]).exists():
                 errors.append(
-                    f"Missing content: {entry['file']} (topic: {topic_slug}, quadrant: {quadrant})"
+                    f"Missing exercise: {ex_info['file']} (topic: {topic_slug})"
                 )
-            for ex in entry.get("exercises", []):
-                ex_info = normalize_exercise(ex)
-                ex_path = diataxis_dir / ex_info["file"]
-                if not ex_path.exists():
-                    errors.append(
-                        f"Missing exercise: {ex_info['file']} (topic: {topic_slug})"
-                    )
+            prior = seen_stems.get(ex_info["stem"])
+            if prior is not None and prior != ex_info["file"]:
+                errors.append(
+                    f"Exercise stem collision: {prior!r} and {ex_info['file']!r} "
+                    f"both export to exercises/{ex_info['stem']}/"
+                )
+            else:
+                seen_stems[ex_info["stem"]] = ex_info["file"]
+
     return errors, warnings
 
 
@@ -145,23 +189,11 @@ def generate_landing_page(quadrant: str, structure: dict, diataxis_dir: Path) ->
     quadrant_dir = diataxis_dir / quadrant
     quadrant_dir.mkdir(parents=True, exist_ok=True)
 
-    titles = {
-        "tutorials": "Tutorials",
-        "howto": "How-to Guides",
-        "reference": "Reference",
-        "explanation": "Explanation",
-    }
-    descriptions = {
-        "tutorials": "Learn by doing — guided lessons that take you through a topic step by step.",
-        "howto": "Practical directions for accomplishing specific tasks.",
-        "reference": "Technical descriptions and specifications.",
-        "explanation": "Background, context, and deeper understanding.",
-    }
-
+    meta = QUADRANT_META[quadrant]
     lines = [
-        f"# {titles[quadrant]}",
+        f"# {meta['label']}",
         "",
-        descriptions[quadrant],
+        meta["description"],
         "",
     ]
 
@@ -285,18 +317,19 @@ def convert_markdown(
     svg_dir = build_dir / "assets" / "mermaid"
     processed = prerender_mermaid(md_content, svg_dir, md_path.stem, asset_prefix=cssroot)
 
-    tmp_md: Path | None = None
-    try:
-        if processed != md_content:
-            # Write under build_dir so the source tree stays clean even if pandoc crashes.
-            tmp_dir = build_dir / ".tmp"
-            tmp_dir.mkdir(parents=True, exist_ok=True)
-            tmp_md = tmp_dir / f"{md_path.stem}-{id(md_path)}.md"
-            tmp_md.write_text(processed, encoding="utf-8")
-            pandoc_input = tmp_md
-        else:
-            pandoc_input = md_path
+    pandoc_input: Path | str
+    tmp_path: str | None = None
+    if processed != md_content:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", encoding="utf-8", delete=False,
+        ) as f:
+            f.write(processed)
+            tmp_path = f.name
+        pandoc_input = tmp_path
+    else:
+        pandoc_input = md_path
 
+    try:
         cmd = [
             "pandoc", str(pandoc_input),
             "--from", "markdown",
@@ -315,8 +348,8 @@ def convert_markdown(
 
         result = subprocess.run(cmd, capture_output=True, text=True)
     finally:
-        if tmp_md is not None:
-            tmp_md.unlink(missing_ok=True)
+        if tmp_path is not None:
+            Path(tmp_path).unlink(missing_ok=True)
 
     if result.returncode != 0:
         print(f"  pandoc error for {md_path}: {result.stderr}", file=sys.stderr)
@@ -388,8 +421,7 @@ def insert_exercise_iframes(html_path: Path, exercises: list[dict], asset_prefix
 
     content = html_path.read_text(encoding="utf-8")
     insertion = "\n".join(iframe_blocks)
-    # Insert before the FIRST </body> (case-insensitive). Using plain str.replace
-    # would misfire if a tutorial has a literal </body> in a code sample.
+    # Regex + count=1 instead of str.replace so a literal </body> inside a code sample doesn't misfire.
     content, replaced = BODY_CLOSE.subn(f"{insertion}\n</body>", content, count=1)
     if not replaced:
         content += "\n" + insertion + "\n"
@@ -405,13 +437,6 @@ def generate_sidebar_html(structure: dict) -> str:
     """Build the sidebar navigation HTML from the structure document."""
     project = structure.get("project", {})
     name = project.get("name", "Documentation")
-
-    section_labels = {
-        "tutorials": "Tutorials",
-        "howto": "How-to Guides",
-        "reference": "Reference",
-        "explanation": "Explanation",
-    }
 
     topics = structure.get("topics", {})
     sorted_topics = sorted(
@@ -434,7 +459,7 @@ def generate_sidebar_html(structure: dict) -> str:
             continue
 
         lines.append(f'<div class="nav-section {quadrant}">')
-        lines.append(f'  <div class="nav-section-title">{section_labels[quadrant]}</div>')
+        lines.append(f'  <div class="nav-section-title">{QUADRANT_META[quadrant]["label"]}</div>')
         lines.append("  <ul>")
         for title, href in entries:
             lines.append(f'    <li><a href="{href}">{title}</a></li>')
@@ -444,9 +469,7 @@ def generate_sidebar_html(structure: dict) -> str:
     return "\n".join(lines)
 
 
-# Match hrefs that do NOT start with a scheme (http:, https:, mailto:, etc.),
-# a fragment (#), or a root slash — i.e., the relative, site-internal hrefs the
-# sidebar generates and that need a "../" prefix for files in quadrant subdirs.
+# Matches only relative site-internal hrefs — leaves absolute URLs and fragments alone.
 RELATIVE_HREF = re.compile(r'href="(?![a-z][a-z0-9+.-]*:|/|#)')
 
 
@@ -477,6 +500,34 @@ def inject_sidebar(html_path: Path, sidebar_html: str, current_href: str) -> Non
 # ---------------------------------------------------------------------------
 
 
+def collect_exercises(structure: dict) -> tuple[dict[str, list[dict]], dict[str, dict]]:
+    """Return (per-file exercises, stem-keyed unique exercises) from a structure."""
+    per_file: dict[str, list[dict]] = {}
+    by_stem: dict[str, dict] = {}
+    for _, _, entry in iter_entries(structure):
+        normalized = [normalize_exercise(e) for e in entry.get("exercises", [])]
+        if not normalized:
+            continue
+        per_file[entry["file"]] = normalized
+        for n in normalized:
+            by_stem[n["stem"]] = n
+    return per_file, by_stem
+
+
+def clean_build_dir(build_dir: Path) -> None:
+    """Empty *build_dir* while preserving ``exercises/`` for WASM-export caching."""
+    if not build_dir.exists():
+        build_dir.mkdir()
+        return
+    for child in build_dir.iterdir():
+        if child.name == "exercises":
+            continue
+        if child.is_dir():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+
+
 def build(diataxis_dir: Path) -> None:
     """Run the full build pipeline."""
     print(f"Building from {diataxis_dir}")
@@ -489,58 +540,21 @@ def build(diataxis_dir: Path) -> None:
     if errors:
         for e in errors:
             print(f"  ERROR: {e}", file=sys.stderr)
-        print(
-            f"\n{len(errors)} validation error(s). Fix diataxis.toml or the missing files and re-run.",
-            file=sys.stderr,
+        fail(
+            f"\n{len(errors)} validation error(s). "
+            "Fix diataxis.toml or the missing files and re-run."
         )
-        sys.exit(1)
 
-    # Collect exercises (normalized) and map them to their owning content file.
-    file_exercises: dict[str, list[dict]] = {}
-    all_exercises: dict[str, dict] = {}  # stem -> normalized entry
-    topics = structure.get("topics", {})
-    for topic in topics.values():
-        for quadrant in QUADRANT_DIRS:
-            entry = topic.get(quadrant)
-            if entry is None:
-                continue
-            normalized = [normalize_exercise(e) for e in entry.get("exercises", [])]
-            if normalized:
-                file_exercises[entry["file"]] = normalized
-                for n in normalized:
-                    existing = all_exercises.get(n["stem"])
-                    if existing and existing["file"] != n["file"]:
-                        print(
-                            f"  ERROR: exercise stem collision: {existing['file']!r} and "
-                            f"{n['file']!r} both export to exercises/{n['stem']}/",
-                            file=sys.stderr,
-                        )
-                        sys.exit(1)
-                    all_exercises[n["stem"]] = n
+    file_exercises, all_exercises = collect_exercises(structure)
 
     if all_exercises and shutil.which("marimo") is None:
-        print(
+        fail(
             "Error: `marimo` is not on PATH but the project references exercises. "
-            "Install it (e.g., `uv sync`) and try again.",
-            file=sys.stderr,
+            "Install it (e.g., `uv sync`) and try again."
         )
-        sys.exit(1)
 
-    # Preserve the _build/exercises subtree across rebuilds so WASM exports can
-    # be cached by mtime. Everything else under _build is regenerated.
     build_dir = diataxis_dir / "_build"
-    exercises_dir = build_dir / "exercises"
-    preserved_exercises: Path | None = None
-    if build_dir.exists():
-        if exercises_dir.exists():
-            preserved_exercises = diataxis_dir / "_build.exercises.bak"
-            if preserved_exercises.exists():
-                shutil.rmtree(preserved_exercises)
-            exercises_dir.rename(preserved_exercises)
-        shutil.rmtree(build_dir)
-    build_dir.mkdir()
-    if preserved_exercises is not None:
-        preserved_exercises.rename(exercises_dir)
+    clean_build_dir(build_dir)
 
     assets_dest = build_dir / "assets"
     assets_dest.mkdir(parents=True, exist_ok=True)
@@ -558,11 +572,19 @@ def build(diataxis_dir: Path) -> None:
         generate_landing_page(quadrant, structure, diataxis_dir)
 
     if all_exercises:
+        # Each export shells out to marimo and is CPU/IO-bound — thread pool works fine.
         print("Exporting exercises to WASM...")
-        for stem in sorted(all_exercises):
-            ex = all_exercises[stem]
-            src = diataxis_dir / ex["file"]
-            export_exercise_wasm(src, build_dir / "exercises" / stem)
+        with ThreadPoolExecutor(max_workers=min(len(all_exercises), os.cpu_count() or 4)) as pool:
+            futures = [
+                pool.submit(
+                    export_exercise_wasm,
+                    diataxis_dir / ex["file"],
+                    build_dir / "exercises" / stem,
+                )
+                for stem, ex in sorted(all_exercises.items())
+            ]
+            for fut in as_completed(futures):
+                fut.result()
 
     sidebar_html = generate_sidebar_html(structure)
 
@@ -583,25 +605,18 @@ def build(diataxis_dir: Path) -> None:
             rel = md_file.relative_to(diataxis_dir)
             html_rel = rel.with_suffix(".html")
             html_path = build_dir / html_rel
-            title = md_file.stem.replace("-", " ").replace("_", " ").title()
-
             cssroot = "../"
             convert_markdown(
-                md_file, html_path, title, template, build_dir,
+                md_file, html_path, humanize(md_file.stem), template, build_dir,
                 quadrant=quadrant,
                 cssroot=cssroot,
             )
 
-            current_href = f"{quadrant}/{html_rel.name}"
-            inject_sidebar(html_path, sidebar_html, current_href)
+            inject_sidebar(html_path, sidebar_html, f"{quadrant}/{html_rel.name}")
 
             rel_str = str(rel)
             if rel_str in file_exercises:
                 insert_exercise_iframes(html_path, file_exercises[rel_str], asset_prefix=cssroot)
-
-    tmp_dir = build_dir / ".tmp"
-    if tmp_dir.exists():
-        shutil.rmtree(tmp_dir)
 
     print(f"Build complete: {build_dir}")
     print(f"Open {build_dir}/index.html in your browser, or run 'diataxis serve' to start a local server.")
@@ -619,8 +634,7 @@ def serve(diataxis_dir: Path, *, rebuild: bool = True) -> None:
 
     build_dir = diataxis_dir / "_build"
     if not build_dir.exists():
-        print("Build directory not found. Run 'diataxis build' first.", file=sys.stderr)
-        sys.exit(1)
+        fail("Build directory not found. Run 'diataxis build' first.")
 
     static_port = find_available_port(STATIC_PORT)
     print(f"Starting static server on port {static_port}...")
@@ -661,8 +675,7 @@ def publish(diataxis_dir: Path, sites_dir: Path) -> None:
     project = structure.get("project", {})
     name = project.get("name")
     if not name:
-        print("Error: project.name is required in diataxis.toml", file=sys.stderr)
-        sys.exit(1)
+        fail("Error: project.name is required in diataxis.toml")
 
     build(diataxis_dir)
     build_dir = diataxis_dir / "_build"
