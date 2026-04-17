@@ -44,9 +44,10 @@ detail, what format, what analogies or approaches to use."""
 guidance = """Free-form notes for the content generator and scorer. What to \
 do, what to avoid, what to watch out for. Cross-linking instructions. \
 Complexity constraints. These notes evolve as the project matures."""
-exercises = [                            # Optional: marimo notebook paths
-    "exercises/topic-exercise.py",
-]
+exercises = [                            # Optional: marimo notebook references
+    "exercises/topic-exercise.py",       # String form: use defaults
+    { file = "exercises/advanced.py", title = "Advanced Exercise", height = 800 },
+]                                        # Table form overrides title and/or height
 
 [topics.topic-slug.howto]
 file = "howto/topic-task.md"
@@ -111,7 +112,7 @@ knowledge. OK to discuss history, alternatives, tradeoffs."""
 | `covers` | Yes | Array of specific items this file must address |
 | `detail` | Yes | Depth, format, and scope guidance |
 | `guidance` | Yes | Free-form notes: do's, don'ts, watch-outs, cross-linking |
-| `exercises` | No | Array of marimo notebook paths (typically tutorials only) |
+| `exercises` | No | Array of marimo notebook references (typically tutorials only). Each entry is either a path string (defaults applied) or a table `{ file, title?, height? }` for per-exercise overrides. `height` is the iframe pixel height (default 600) |
 
 ## Rules
 

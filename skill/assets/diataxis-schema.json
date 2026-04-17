@@ -136,10 +136,33 @@
         },
         "exercises": {
           "type": "array",
-          "description": "Marimo notebook paths linked from this file (typically tutorials only).",
+          "description": "Marimo notebook references linked from this file (typically tutorials only). Each entry is either a path string or a table with {file, title?, height?} for per-exercise overrides.",
           "items": {
-            "type": "string",
-            "minLength": 1
+            "oneOf": [
+              { "type": "string", "minLength": 1 },
+              {
+                "type": "object",
+                "required": ["file"],
+                "additionalProperties": false,
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Path to the marimo notebook, relative to the diataxis directory."
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Display title for the exercise heading. Defaults to a humanized version of the file stem."
+                  },
+                  "height": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "description": "Iframe height in pixels. Defaults to 600."
+                  }
+                }
+              }
+            ]
           }
         }
       }

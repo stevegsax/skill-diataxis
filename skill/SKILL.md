@@ -211,9 +211,12 @@ entity-relationship diagrams, etc.). Write them as fenced code blocks with the
 them to SVG via `mmdc` — no client-side JavaScript needed.
 
 **Exercises**: For tutorials in learning-path projects, create marimo `.py`
-notebooks. These are authored as standard marimo notebooks and served via
-`marimo run` in the final output. Each exercise file should be self-contained
-and focused on one concept.
+notebooks. These are authored as standard marimo notebooks. The build pipeline
+exports each one to a self-contained WASM HTML bundle (via
+`marimo export html-wasm`) that runs in the browser via Pyodide — no marimo
+server process is required to view the published output. Each exercise file
+should be self-contained and focused on one concept, and must only depend on
+packages available to Pyodide.
 
 **Deterministic transforms**: When a task is purely mechanical (converting markdown
 to HTML, formatting tables, validating structure), use the appropriate tool — not
@@ -328,8 +331,8 @@ The `diataxis` CLI requires `uv` to be installed. All commands are run via
 
 ```bash
 uv run diataxis build            # Build HTML from diataxis/ directory
-uv run diataxis serve            # Build + start local servers
-uv run diataxis serve-only       # Start servers without rebuilding
+uv run diataxis serve            # Build + start a local static server
+uv run diataxis serve-only       # Start the static server without rebuilding
 uv run diataxis publish          # Rebuild and deploy to ~/Sites/<project-slug>/
 uv run diataxis build -d <path>  # Use a different diataxis directory
 ```
@@ -338,12 +341,14 @@ The pipeline:
 1. Reads `diataxis.toml` for the project manifest
 2. Converts markdown files to HTML via `pandoc`
 3. Generates navigation/index pages from the structure
-4. Inserts iframe references for marimo notebooks
-5. Outputs a directory of HTML files ready to serve
+4. Exports marimo exercises to self-contained WASM bundles under
+   `_build/exercises/<stem>/` (via `marimo export html-wasm`)
+5. Inserts iframe references pointing at each exercise bundle
+6. Outputs a directory of HTML files ready to serve
 
-The marimo notebooks are served separately — the HTML pages contain iframes
-pointing to the marimo server on port 2718. The static HTML is served on port
-8000. The `serve` command handles both.
+The static site is fully self-contained: exercises run in the browser via
+Pyodide, so there is no separate marimo process and no port-coordination
+needed. `serve` starts a single static server (port 8000 by default).
 
 **Publishing**: `diataxis publish` rebuilds the site and copies `_build/` to
 `~/Sites/<project-slug>/`, where `<project-slug>` is derived from `project.name`

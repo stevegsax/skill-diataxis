@@ -8,7 +8,7 @@ never generates HTML directly.
 
 - [Overview](#overview)
 - [Build Steps](#build-steps)
-- [Marimo Integration](#marimo-integration)
+- [Marimo WASM Export](#marimo-wasm-export)
 - [Serve](#serve)
 - [Publish](#publish)
 - [Directory Structure](#directory-structure)
@@ -18,20 +18,20 @@ never generates HTML directly.
 ## Overview
 
 The pipeline reads `diataxis/diataxis.toml` as its manifest and produces a
-`diataxis/_build/` directory containing static HTML files and assets. Interactive components (marimo
-notebooks) are served by a separate marimo process — the built HTML references
-them via iframes.
+`diataxis/_build/` directory containing static HTML files, assets, and
+self-contained exercise bundles. The output is fully static: exercises run in
+the browser via Pyodide, so no separate marimo server process is required.
 
 ```
 diataxis.toml ──┐
                 │
-markdown files ─┼── build script ── _build/ (HTML)
+markdown files ─┼── build script ── _build/ (HTML + WASM exercise bundles)
                 │
-marimo notebooks ── marimo run ──── localhost:2718 (interactive)
+marimo notebooks ─ marimo export html-wasm ─┘
 ```
 
 All transforms in the build pipeline are deterministic. The build script does not
-generate or modify content — it transforms formats and assembles the final output.
+generate or modify prose content — it transforms formats and assembles the final output.
 
 ---
 
@@ -46,28 +46,27 @@ Read `diataxis.toml` and verify:
 
 Report any issues before proceeding.
 
-### 2. Generate the site introductory page
+### 2. Convert the site introductory page
 
-Generate `_build/index.html` from `diataxis/index.md`. This is the site root —
-the first page a reader lands on. It must answer two questions concisely:
+Convert `diataxis/index.md` to `_build/index.html`. This is the site root — the
+first page a reader lands on — and it is authored, not generated. The build
+step runs it through pandoc like any other markdown file and never overwrites
+it. If `diataxis/index.md` is absent the build simply skips the home page.
+
+The intro page must answer two questions concisely:
 
 - **Why does this project exist?** What problems does it solve? Draw from the
   `purpose` field in `diataxis.toml`.
 - **What does it do?** A brief description of what the project provides. Draw
   from the `description` field.
 
-The introductory page is a signpost. It orients the reader and links into the
-four quadrant sections rather than explaining things in detail itself. Typical
-links:
+It is a signpost. It orients the reader and links into the four quadrant
+sections rather than explaining things in detail itself. Typical links:
 
 - "New here? Start with the tutorial" (points to tutorials/)
 - "Need to do X? See the how-to guides" (points to howto/)
 - "Looking up specifics? Check the reference" (points to reference/)
 - "Want to understand why? Read the explanation" (points to explanation/)
-
-The introductory page is authored (in `diataxis/index.md`), not generated — it
-reflects the project's voice and framing. The build step converts it to HTML
-like any other markdown file.
 
 ### 3. Generate quadrant landing pages
 
@@ -102,18 +101,36 @@ in the markdown source should use standard LaTeX delimiters (`$...$` for inline,
 `$$...$$` for display). MathJax is loaded from CDN in the HTML template.
 
 The template provides consistent styling, navigation, MathJax configuration, and
-the iframe insertion points for marimo notebooks.
+the iframe insertion points for exercise bundles.
 
-### 5. Insert marimo iframe references
+### 5. Export exercises to WASM bundles
 
-For tutorial files that have exercises listed in `diataxis.toml`, insert iframe
-elements pointing to the marimo server:
+For every unique exercise referenced in `diataxis.toml`, export the marimo
+notebook to a self-contained WASM HTML bundle:
+
+```bash
+marimo export html-wasm path/to/exercises/basic-ops.py \
+    -o _build/exercises/basic-ops/ \
+    --mode run \
+    -f
+```
+
+Each bundle is a directory containing its own `index.html` and `assets/`, all
+with relative paths, so the bundle is relocatable. The bundles load Pyodide in
+the browser — no server-side Python is needed to run exercises.
+
+### 6. Insert exercise iframe references
+
+For pages that reference exercises in `diataxis.toml`, insert iframe elements
+pointing at the exported bundles. Because exercises live under
+`_build/exercises/` and pages live under `_build/<quadrant>/`, the src uses a
+relative path:
 
 ```html
 <div class="marimo-exercise">
-    <h3>Exercise: Basic Operations</h3>
+    <h3>Exercise: Basic Ops</h3>
     <iframe
-        src="http://localhost:2718/basic-ops"
+        src="../exercises/basic-ops/index.html"
         sandbox="allow-scripts allow-same-origin allow-downloads allow-popups allow-forms"
         width="100%"
         height="600"
@@ -122,10 +139,17 @@ elements pointing to the marimo server:
 </div>
 ```
 
-The iframe src paths correspond to marimo's ASGI app mount points (see
-[Marimo Integration](#marimo-integration)).
+Because the iframe src is a relative path inside `_build/`, the page works
+identically under `diataxis serve`, under any static file host, and after
+`publish` copies the tree to `~/Sites/<slug>/`.
 
-### 6. Generate site navigation
+The exercise heading and iframe height come from the exercise entry in
+`diataxis.toml`. A bare string (`"exercises/foo.py"`) uses a humanized title
+derived from the file stem and the default 600px height. A table entry
+(`{ file = "exercises/foo.py", title = "Foo", height = 800 }`) overrides
+either or both.
+
+### 7. Generate site navigation
 
 Build a navigation structure from `diataxis.toml`:
 - Top-level links to each quadrant section
@@ -135,64 +159,60 @@ Build a navigation structure from `diataxis.toml`:
 
 Inject navigation into each HTML page via the pandoc template.
 
-### 7. Copy assets
+### 8. Copy assets
 
 Copy any static assets (images, CSS, fonts) to `_build/assets/`.
 
 ---
 
-## Marimo Integration
+## Marimo WASM Export
 
-Marimo notebooks are served via the programmatic ASGI API, mounting multiple
-notebooks under a single server:
+Each exercise is exported independently via `marimo export html-wasm`. The
+resulting bundle under `_build/exercises/<stem>/` contains the full marimo JS
+runtime plus Pyodide, so it is large (on the order of tens of MB per exercise).
+Bundles are not deduplicated across exercises.
 
-```python
-import marimo
+**Caching.** Because export is the slowest step, the build preserves any
+existing `_build/exercises/` tree across rebuilds and only re-runs the export
+for a given exercise when its source `.py` is newer than the exported
+`index.html`. An unchanged `.py` will reuse its bundle, so iterating on prose
+does not trigger a full re-export.
 
-app = marimo.create_asgi_app()
+Requirements for the exercise `.py` files:
 
-# Mount at root level to avoid double-prefix redirects
-app = app.with_app(path="/basic-ops", root="./exercises/basic-ops.py")
-app = app.with_app(path="/simplify", root="./exercises/simplify.py")
+- Must be a valid marimo notebook (`marimo.App()` with `@app.cell` functions).
+- Must only import packages available under Pyodide. Pure-Python packages and
+  the common scientific stack (numpy, pandas, scipy, matplotlib) are supported;
+  packages requiring system C libraries or OS-level resources are not.
+- Should be self-contained — do not `import` from sibling project modules.
 
-# .build() returns the callable ASGI app
-app = app.build()
-```
+The `marimo` CLI must be available on `PATH` during the build. It is declared
+as a runtime dependency in `pyproject.toml`, so `uv run diataxis build` picks
+it up automatically.
 
-This runs as a separate process alongside the static file server.
-
-The build script generates the ASGI app configuration from `diataxis.toml` by
-reading all `exercises` entries and mapping them to mount points.
-
-### Marimo server configuration
-
-- **Host**: `localhost`
-- **Port**: `2718` (default, configurable)
-- **Allow origins**: `*` (required for iframe embedding from the static server)
-- The ASGI app should be run with uvicorn or similar
+The iframe must be served over HTTP (not `file://`) because the bundle loads
+its assets via fetch. `diataxis serve`, any static host, and `~/Sites/` served
+over HTTP all satisfy this.
 
 ---
 
 ## Serve
 
-The `serve` command starts both servers:
-
-1. **Static server**: Python's `http.server` (or similar) serving `_build/` on
-   port 8000
-2. **Marimo server**: The ASGI app serving notebooks on port 2718
-
-Both are started as background processes and can be stopped together.
+The `serve` command rebuilds the site and starts a single static server:
 
 ```bash
 # Build only
 uv run diataxis build
 
-# Build and serve
+# Build and serve on localhost:8000
 uv run diataxis serve
 
-# Serve existing build
+# Serve existing build without rebuilding
 uv run diataxis serve-only
 ```
+
+Because exercises are pre-exported WASM bundles, there is no second server
+process and no port coordination. The static server alone is sufficient.
 
 ---
 
@@ -220,7 +240,8 @@ uv run diataxis publish --sites-dir /path/to/sites
    command fails if the slug is empty.
 3. **Copies `_build/` to `<sites-dir>/<slug>/`.** Any existing directory at
    that destination is removed first, so re-publishing replaces the previous
-   copy cleanly.
+   copy cleanly. Exercise bundles under `_build/exercises/` come along with
+   the rest of the tree, so exercises keep working after publish.
 4. **Writes a per-project manifest.** A small JSON file at
    `<sites-dir>/<slug>/.diataxis-meta.json` records the project name, slug,
    and description. This is what the top-level catalog reads.
@@ -235,6 +256,8 @@ uv run diataxis publish --sites-dir /path/to/sites
   an error.
 - `jinja2` is a runtime dependency (pulled in via `pyproject.toml`).
 - The destination `<sites-dir>` is created if it does not exist.
+- `~/Sites/` (or whichever sites directory is used) must be served over HTTP
+  for exercise iframes to load.
 
 ### Directory layout after publishing
 
@@ -247,6 +270,10 @@ uv run diataxis publish --sites-dir /path/to/sites
 │   ├── howto/
 │   ├── reference/
 │   ├── explanation/
+│   ├── exercises/                    # WASM bundles, one subdir per exercise
+│   │   └── basic-ops/
+│   │       ├── index.html
+│   │       └── assets/
 │   ├── assets/
 │   └── .diataxis-meta.json           # {name, slug, description}
 └── another-project/
@@ -270,7 +297,7 @@ project-root/
     ├── reference/
     ├── explanation/
     ├── exercises/
-    │   └── basic-ops.py          # Marimo notebook
+    │   └── basic-ops.py          # Marimo notebook source
     └── _build/
         ├── index.html            # Site root / home page
         ├── tutorials/
@@ -279,6 +306,10 @@ project-root/
         ├── howto/
         ├── reference/
         ├── explanation/
+        ├── exercises/            # Exported WASM bundles
+        │   └── basic-ops/
+        │       ├── index.html
+        │       └── assets/
         └── assets/
             ├── style.css
             └── nav.js
