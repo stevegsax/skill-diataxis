@@ -1,12 +1,41 @@
 # skill-diataxis
 
-A Claude Code skill for creating, revising, scoring, and publishing documentation structured around the [Diataxis](https://diataxis.fr/) framework.
+> A Claude Code skill for generating and maintaining [Diataxis](https://diataxis.fr/)-structured documentation (tutorials, how-to guides, reference, explanation).
 
-> **Note:** This skill was developed on macOS. Paths, shell commands, and tooling assumptions (e.g. `~/Sites/`, zsh) will likely need adjustment to run on Windows or Linux.
+Keeping documentation current and complete is a task that is often forgotten or ignored. The purpose of this skill is to **delegate** documentation tasks to a robot. The skill provides criteria to evaluate the quality and completeness of the documentation. The human's role is to ensure that the correct topics are present, the lessons are thorough and correct, and the tone is appropriate. You are delegating day-to-day tasks, but the human is still responsible for editorial voice.
 
-> **Note:** Page generation is currently integrated into the diataxis publishing script. This is probably a mistake — a future version will switch to a dedicated "publish" skill that delegates to a well-supported static site generator like Hugo or Jekyll.
+One of the main advantages of this tool is that we create the documentation in a separate, self-contained directory. Thus, you can **create new tutorials for projects you don't control** without messing up the original repo. In addition to general documentation for your own projects, you would use it if you ever wanted:
 
-> **Important:** The goal of this skill is to delegate documentation generation and management to the LLM. Hand edits to markdown files will be overwritten unless you explicitly tell the robot what to do or avoid. Most of your changes will probably be in `diataxis.toml`.
+- A new tutorial for a framework that's customized to exactly what you're doing
+- A flexible learning path for some topic that always interested you. You can start broad and then ask it to expand or remove topics following your interest
+- A flexible research report on some subject
+
+At SAX Capital, we use it to create live tutorials for our internal tools that are always up to date with the latest version of the software. It also keeps the documentation in sync with the push, but lots of tools do that.
+
+**Important:** The goal of this skill is to delegate documentation generation and management to the LLM. **Hand edits to markdown files will be overwritten unless you explicitly tell the robot what to do or avoid**. Most of your changes will probably be in `diataxis.toml`.
+
+**Note:** Page generation is currently integrated into the diataxis publishing script. This is probably a mistake — a future version will switch to a dedicated "publish" skill that delegates to a well-supported static site generator like Hugo or Jekyll.
+
+See [`skill/SKILL.md`](skill/SKILL.md) for the instructions Claude loads when the skill is invoked, and [`examples/self-docs/`](examples/self-docs/) for a worked example that documents this project with itself.
+
+## Requirements
+
+- Python 3.13+ and [uv](https://docs.astral.sh/uv/)
+- [pandoc](https://pandoc.org/)
+- [nushell](https://www.nushell.sh/) — for the deterministic check suite
+- [mermaid-cli](https://github.com/mermaid-js/mermaid-cli) (`mmdc`) — optional, only if sources contain mermaid diagrams
+
+This skill was developed on macOS. Paths, shell commands, and tooling assumptions (e.g. `~/Sites/`, zsh) will likely need adjustment to run on Windows or Linux.
+
+## Install
+
+Install Python dependencies:
+
+```bash
+uv sync
+```
+
+To make the skill available to Claude Code, copy or symlink the `skill/` directory into your Claude Code skills location (e.g. `~/.claude/skills/diataxis/`). Once installed, invoke it by asking Claude to create, update, score, or publish Diataxis documentation for a project.
 
 ## What it does
 
@@ -42,17 +71,43 @@ skill-diataxis/
 │   └── scripts/
 │       └── build.py                 # Build pipeline and CLI
 ├── examples/
-│   └── self-docs/                   # Self-documentation project
+│   └── self-docs/                   # Worked example: documents this project
 ├── evals/
 │   └── evals.json                   # Test cases
-├── diataxis-workspace/              # Eval results and grading
+├── diataxis-workspace/              # Scratch area for eval runs and grading output
 ├── pyproject.toml
 └── README.md
 ```
 
-## CLI
+## Authoring format
 
-Requires Python 3.13+, [pandoc](https://pandoc.org/), and [nushell](https://www.nushell.sh/) (for the check suite). [mermaid-cli](https://github.com/mermaid-js/mermaid-cli) (`mmdc`) is optional — required only if sources contain mermaid diagrams.
+- Static prose is authored in **Markdown**
+- Interactive exercises are authored as **marimo** `.py` notebooks, exported to self-contained WASM bundles that run in-browser via Pyodide (no marimo server required)
+- Diagrams are authored as **mermaid** fenced code blocks, pre-rendered to SVG at build time
+- All math uses **LaTeX** notation (`$...$` inline, `$$...$$` display), rendered via MathJax
+- Deterministic transforms (markdown to HTML, schema validation, structural checks) use tools like pandoc, `check-jsonschema`, and nushell — not LLM generation
+
+## Documentation structure
+
+Each Diataxis project lives in a `diataxis/` directory:
+
+```
+project-root/
+└── diataxis/
+    ├── diataxis.toml          # Source of truth
+    ├── index.md               # Introductory page
+    ├── scores.toml            # Scoring history across runs
+    ├── tutorials/
+    ├── howto/
+    ├── reference/
+    ├── explanation/
+    ├── exercises/             # Marimo notebooks
+    └── _build/                # Generated HTML
+```
+
+The `diataxis.toml` structure document defines topics, what each file should cover, and guidance notes that serve as both the generation brief and scoring criteria. `scores.toml` accumulates the result of each scoring pass so regressions across runs are visible over time.
+
+## CLI
 
 ```bash
 # Build HTML from a diataxis/ directory
@@ -77,32 +132,4 @@ All subcommands accept `-d <path>` to point at a non-default diataxis directory.
 uv run diataxis publish -d examples/self-docs
 ```
 
-`publish` rebuilds the site, then copies `_build/` to `~/Sites/<slug>/`, where `<slug>` is derived from `project.name` in `diataxis.toml`. It then regenerates `~/Sites/index.html` from a Jinja2 template by scanning each `~/Sites/*/.diataxis-meta.json` manifest. Pass `--sites-dir` to target a different location.
-
-## Authoring format
-
-- Static prose is authored in **Markdown**
-- Interactive exercises are authored as **marimo** `.py` notebooks, exported to self-contained WASM bundles that run in-browser via Pyodide (no marimo server required)
-- Diagrams are authored as **mermaid** fenced code blocks, pre-rendered to SVG at build time
-- All math uses **LaTeX** notation (`$...$` inline, `$$...$$` display), rendered via MathJax
-- Deterministic transforms (markdown to HTML, schema validation, structural checks) use tools like pandoc, `check-jsonschema`, and nushell — not LLM generation
-
-## Documentation structure
-
-Each Diataxis project lives in a `diataxis/` directory:
-
-```
-project-root/
-└── diataxis/
-    ├── diataxis.toml          # Source of truth
-    ├── index.md               # Introductory page
-    ├── scores.toml            # Scoring history
-    ├── tutorials/
-    ├── howto/
-    ├── reference/
-    ├── explanation/
-    ├── exercises/             # Marimo notebooks
-    └── _build/                # Generated HTML
-```
-
-The `diataxis.toml` structure document defines topics, what each file should cover, and guidance notes that serve as both the generation brief and scoring criteria.
+`publish` rebuilds the site, then copies `_build/` to `~/Sites/<slug>/`, where `<slug>` is derived from `project.name` in `diataxis.toml`. Any existing contents at that destination are removed and replaced. It then regenerates `~/Sites/index.html` from a Jinja2 template by scanning each `~/Sites/*/.diataxis-meta.json` manifest. Pass `--sites-dir` to target a different location.
