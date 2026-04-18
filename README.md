@@ -18,7 +18,15 @@ This project is part of a larger initiative at SAX to enhance our knowledge mana
 
 **Note:** Page generation is currently integrated into the diataxis publishing script. This is probably a mistake — a future version will switch to a dedicated "publish" skill that delegates to a well-supported static site generator like Hugo or Jekyll.
 
-See [`skill/SKILL.md`](skill/SKILL.md) for the instructions Claude loads when the skill is invoked, and [`examples/self-docs/`](examples/self-docs/) for a worked example that documents this project with itself.
+See [`skill/SKILL.md`](skill/SKILL.md) for the instructions Claude loads when the skill is invoked.
+
+## Worked example
+
+**The documentation for this repository is itself authored with this skill.** The complete inputs (`diataxis.toml`, markdown, marimo exercises) and generated HTML live under [`examples/self-docs/`](examples/self-docs/). Rebuild it locally with:
+
+```bash
+uv run diataxis build -d examples/self-docs
+```
 
 ## Requirements
 
