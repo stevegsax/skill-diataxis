@@ -12,6 +12,8 @@ One of the main advantages of this tool is that we create the documentation in a
 
 At SAX Capital, we use it to create live tutorials for our internal tools that are always up to date with the latest version of the software. It also keeps the documentation in sync with the push, but lots of tools do that.
 
+This project is part of a larger initiative at SAX to enhance our knowledge management practices. The arrival of agents has given us both a compelling reason to do this work and a set of tools that make it practical.
+
 **Important:** The goal of this skill is to delegate documentation generation and management to the LLM. **Hand edits to markdown files will be overwritten unless you explicitly tell the robot what to do or avoid**. Most of your changes will probably be in `diataxis.toml`.
 
 **Note:** Page generation is currently integrated into the diataxis publishing script. This is probably a mistake — a future version will switch to a dedicated "publish" skill that delegates to a well-supported static site generator like Hugo or Jekyll.
