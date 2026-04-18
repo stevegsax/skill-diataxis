@@ -37,6 +37,24 @@ uv run diataxis build -d examples/self-docs
 
 This skill was developed on macOS. Paths, shell commands, and tooling assumptions (e.g. `~/Sites/`, zsh) will likely need adjustment to run on Windows or Linux.
 
+## External tools
+
+A key design insight of this project is that our computers already host tools for managing web text. We're not starting from scratch. The robot *uses* those tools — it does not replace them. It is a teammate and collaborator: it makes editorial decisions and orchestrates the pipeline, while each tool below does the work it was built for.
+
+`uv sync` installs the Python dependencies; the rest are installed separately.
+
+- **pandoc** — converts each markdown source to HTML5 using a bundled template, with MathJax enabled for LaTeX math
+- **nushell** (`nu`) — runs the deterministic check suite under `skill/checks/` that validates structure, cross-links, quadrant rules, and formatting before any LLM scoring pass
+- **mmdc** (mermaid-cli) — pre-renders mermaid fenced code blocks to SVG at build time; optional and skipped when not installed
+- **marimo** — exports each exercise `.py` notebook to a self-contained WASM HTML bundle that runs in-browser via Pyodide (Python dependency, no marimo server required at runtime)
+- **check-jsonschema** — validates `diataxis.toml` against the bundled schema and verifies check-suite output against `check-schema.json` (dev-group dependency)
+- **jinja2** — renders `~/Sites/index.html` from `sites-index.html.j2` when publishing (Python dependency)
+- **uvicorn** — serves the `_build/` directory for `diataxis serve` and `serve-only` (Python dependency)
+
+In the generated site itself, **MathJax** is loaded in the browser to render LaTeX, and **Pyodide** is bundled inside each marimo exercise to run the Python runtime client-side.
+
+**Future directions:** The list above isn't exhaustive. We haven't added **textlint** or other style checkers, but nothing prevents it. The skill assumes a full system underneath — anything you could install and run yourself is also available to the robot.
+
 ## Install
 
 Install Python dependencies:
