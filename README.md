@@ -6,6 +6,8 @@ A Claude Code skill for creating, revising, scoring, and publishing documentatio
 
 > **Note:** Page generation is currently integrated into the diataxis publishing script. This is probably a mistake — a future version will switch to a dedicated "publish" skill that delegates to a well-supported static site generator like Hugo or Jekyll.
 
+> **Important:** The goal of this skill is to delegate documentation generation and management to the LLM. Hand edits to markdown files will be overwritten unless you explicitly tell the robot what to do or avoid. Most of your changes will probably be in `diataxis.toml`.
+
 ## What it does
 
 Manages the full lifecycle of Diataxis-structured documentation:
