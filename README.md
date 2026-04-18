@@ -2,6 +2,10 @@
 
 A Claude Code skill for creating, revising, scoring, and publishing documentation structured around the [Diataxis](https://diataxis.fr/) framework.
 
+> **Note:** This skill was developed on macOS. Paths, shell commands, and tooling assumptions (e.g. `~/Sites/`, zsh) will likely need adjustment to run on Windows or Linux.
+
+> **Note:** Page generation is currently integrated into the diataxis publishing script. This is probably a mistake — a future version will switch to a dedicated "publish" skill that delegates to a well-supported static site generator like Hugo or Jekyll.
+
 ## What it does
 
 Manages the full lifecycle of Diataxis-structured documentation:
