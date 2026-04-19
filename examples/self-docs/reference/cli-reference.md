@@ -1,141 +1,155 @@
-# CLI Reference
-
-All commands are run via `uv run`.
++++
+title = "Build Commands Reference"
+weight = 43
+description = "The build pipeline, CLI commands, and local development workflow"
+topic = "build-pipeline"
+covers = ["make build — what it does", "make serve — what it does", "make exercises — what it does", "make clean — what it does", "Running `hugo` directly without make", "WASM exercise export behavior and caching (via make's dependency graph)", "How the default Hextra theme is wired in and how to swap it"]
+detail = "One subsection per target. Use a consistent format: synopsis, description, examples."
++++
+There is no custom CLI. Building a Diataxis site is `make` plus `hugo`. The
+`Makefile` lives inside the `diataxis/` directory; commands run from there
+or via `make -C diataxis <target>`.
 
 ## Synopsis
 
 ```
-uv run diataxis [-h] [-v] {build,serve,serve-only,publish} [-d DIR] ...
+make [build | serve | exercises | clean]
 ```
 
-## Global options
+## make build
 
-| Flag | Description |
-|------|-------------|
-| `-h`, `--help` | Show help and exit |
-| `-v`, `--version` | Print the `diataxis` version and exit |
+Export any marimo notebooks that have changed, then run `hugo` to render
+the site.
 
-The `-d`/`--dir` flag is defined per subcommand, not at the top level. It
-must appear after the subcommand name.
+Equivalent to:
 
-## diataxis build
+```bash
+uv run marimo export html-wasm exercises/<foo>.py -o static/exercises/<foo>/ --mode run -f   # per changed notebook
+hugo --cleanDestinationDir
+```
 
-Build HTML from markdown sources.
-
-Reads `diataxis.toml`, validates that every referenced content and exercise
-file exists, generates quadrant landing pages, converts markdown to HTML via
-`pandoc`, exports each marimo exercise to a self-contained WASM bundle under
-`_build/exercises/<stem>/`, injects sidebar navigation, and inserts iframe
-references pointing at the exercise bundles.
-
-Output is written to `<diataxis-dir>/_build/`.
-
-### Flags
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-d`, `--dir` | `./diataxis` | Path to the diataxis directory |
+Output is written to `public/`.
 
 ### Behavior notes
 
-- **Validation is fatal.** Missing content files, missing exercise files, or
-  exercise stem collisions abort the build with a non-zero exit.
-- **Mermaid pre-rendering.** If `mmdc` is on `PATH`, ` ```mermaid ` blocks are
-  pre-rendered to SVG in `_build/assets/mermaid/`. If it is not, blocks are
-  left as-is and a warning is printed.
-- **WASM export caching.** The `_build/exercises/` subtree is preserved
-  across rebuilds. An exercise is re-exported only when its source `.py` is
-  newer than the previously exported `index.html`. Unchanged exercises are
-  reused.
-- **Marimo is required for exercises.** When `diataxis.toml` references any
-  exercise, `marimo` must be on `PATH`. A missing binary is a fatal error.
+- **Validation happens in Hugo.** Missing referenced files or broken
+  frontmatter abort the build via Hugo's own error reporting.
+- **WASM export caching.** The Makefile declares each bundle's `index.html`
+  as a target whose prerequisite is the corresponding `.py` source. An
+  exercise is re-exported only when its source is newer than the existing
+  bundle.
+- **Marimo is required when exercises exist.** If `diataxis/exercises/*.py`
+  files are present, `marimo` must be available via `uv run`. A missing
+  binary is a fatal error.
+- **Hugo and Go are required.** `hugo` (extended) and `go` must be on
+  `PATH`. Hugo resolves themes through Go modules, so both are needed even
+  if you do not run any Go commands directly.
 
 ### Example
 
 ```bash
-uv run diataxis build
-uv run diataxis build -d examples/self-docs
+cd diataxis
+make build
 ```
 
-## diataxis serve
+## make serve
 
-Build and start a local static server.
+Export exercises, then run `hugo server` with live reload.
 
-Runs the full build, then starts a single HTTP server on `localhost:8000`
-rooted at `_build/`. Exercises run in the browser via Pyodide — no separate
-process is required.
+Hugo prints the URL it bound to (usually `http://localhost:1313`). Edits
+to any authored file (markdown, `diataxis.toml`, `hugo.toml`, layouts/)
+are picked up automatically.
 
-### Flags
+### Example
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-d`, `--dir` | `./diataxis` | Path to the diataxis directory |
-
-If port 8000 is in use, the next available port up to 8099 is selected and
-reported on startup.
+```bash
+cd diataxis
+make serve
+```
 
 Press Ctrl+C to stop the server.
 
-### Example
+## make exercises
 
-```bash
-uv run diataxis serve
-```
-
-## diataxis serve-only
-
-Start the static server without rebuilding. Requires a previous build
-(`_build/` must exist).
-
-### Flags
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-d`, `--dir` | `./diataxis` | Path to the diataxis directory |
+Export marimo notebooks only. Useful when iterating on notebook sources
+without wanting a full Hugo rebuild.
 
 ### Example
 
 ```bash
-uv run diataxis serve-only
+cd diataxis
+make exercises
 ```
 
-## diataxis publish
+After this, `hugo` or `hugo server` run directly will see the updated
+WASM bundles.
 
-Rebuild the site and copy it to a user-level sites directory so it can be
-viewed alongside other published projects.
+## make clean
 
-The project name from `diataxis.toml` is lowercased and non-alphanumeric runs
-are collapsed to hyphens to form a slug. `_build/` is copied to
-`<sites-dir>/<slug>/`; any existing directory at that path is replaced
-atomically. A per-project manifest (`.diataxis-meta.json`) is written, and
-`<sites-dir>/index.html` is regenerated from every project's manifest.
-
-### Flags
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-d`, `--dir` | `./diataxis` | Path to the diataxis directory |
-| `--sites-dir` | `~/Sites` | Target sites directory |
+Remove `public/` (Hugo output) and `resources/` (Hugo cache). Leaves
+`static/exercises/` alone, because re-exporting WASM bundles is slow.
 
 ### Example
 
 ```bash
-uv run diataxis publish
-uv run diataxis publish --sites-dir /path/to/sites
+cd diataxis
+make clean
 ```
+
+## Running `hugo` directly
+
+The Makefile is convenience. After ensuring exercises are exported, you can
+run `hugo` or `hugo server` directly:
+
+```bash
+cd diataxis
+make exercises     # only if any notebook has changed
+hugo               # one-shot build
+hugo server        # live reload
+```
+
+## Switching the Hugo theme
+
+The scaffolded `hugo.toml` preconfigures [Hextra](https://imfing.github.io/hextra/):
+
+```toml
+[module]
+  [[module.imports]]
+    path = "github.com/imfing/hextra"
+```
+
+To use a different theme, replace that import with any module theme from
+https://themes.gohugo.io/, then refresh the module cache:
+
+```bash
+cd diataxis
+hugo mod get -u
+```
+
+The authored markdown uses standard Hugo frontmatter (`title`, `weight`,
+`description`, plus `topic`, `covers`, `detail` as page params) and generic
+semantic markdown, so any convention-following theme renders the content.
+
+## Deploying
+
+The deployable site is `diataxis/public/`. Deploy with any standard Hugo
+workflow (`hugo deploy`, Netlify, Vercel, GitHub Pages, rsync). See
+https://gohugo.io/hosting-and-deployment/.
 
 ## Exit codes
 
+The Makefile exits with Hugo's or marimo's exit code:
+
 | Code | Meaning |
 |------|---------|
-| `0` | Success |
-| `1` | Fatal error (missing files, invalid `diataxis.toml`, missing `marimo` when exercises are present, etc.) |
+| `0`  | Success |
+| non-zero | A preprocessing step (marimo export) or `hugo` itself failed. See stderr for the error message. |
 
 ## See also
 
-- [How to Build and Serve Documentation](../howto/build-and-serve.html) — the
+- [How to Build and Serve Documentation](../howto/build-and-serve/) — the
   task-focused walkthrough for the same commands.
-- [How to Install and Set Up](../howto/install-and-setup.html) — installing
-  `uv`, `pandoc`, `mmdc`, and the `diataxis` CLI.
-- [diataxis.toml Schema](diataxis-toml-schema.html) — the manifest these
-  commands read.
+- [How to Install and Set Up](../howto/install-and-setup/) — installing
+  `uv`, Hugo extended, Go, make, and marimo.
+- [diataxis.toml Schema](../reference/diataxis-toml-schema/) — the manifest
+  these commands read.

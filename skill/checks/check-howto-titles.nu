@@ -1,6 +1,9 @@
 #!/usr/bin/env nu
 # Check that how-to guide titles start with "How to".
-use mod.nu [make-result make-evidence content-files]
+#
+# Reads the title from TOML frontmatter if present (`title = "..."`), else
+# falls back to the first ATX H1 in the body.
+use mod.nu [make-result make-evidence content-files read-page-title]
 
 def main [diataxis_dir: string] {
     let howto_dir = ($diataxis_dir | path join "howto")
@@ -14,15 +17,11 @@ def main [diataxis_dir: string] {
     }
 
     let incorrect = ($files | each {|f|
-        let content = (open $f --raw)
-        let heading = ($content | lines | where {|l| $l starts-with "# "} | first)
-        if $heading != null {
-            let title = ($heading | str replace "# " "")
-            if not ($title | str downcase | str starts-with "how to") {
-                {file: ("howto/" + ($f | path basename)), title: $title}
-            }
-        } else {
-            {file: ("howto/" + ($f | path basename)), title: "(no heading found)"}
+        let title = (read-page-title $f)
+        if $title == null {
+            {file: ("howto/" + ($f | path basename)), title: "(no title found)"}
+        } else if not ($title | str downcase | str starts-with "how to") {
+            {file: ("howto/" + ($f | path basename)), title: $title}
         }
     } | where {|r| $r != null})
 
@@ -35,7 +34,7 @@ def main [diataxis_dir: string] {
             make-evidence $e.file $"title '($e.title)' does not start with 'How to'"
         })
         let suggestions = ($incorrect | each {|e|
-            $"Rename the heading in ($e.file) to start with 'How to'"
+            $"Rename the title in ($e.file) to start with 'How to' \(in TOML frontmatter or body H1)"
         })
         make-result "check-howto-titles" "fail" $evidence $suggestions | to json
     }

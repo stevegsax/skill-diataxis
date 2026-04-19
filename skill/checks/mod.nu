@@ -46,6 +46,32 @@ export def make-evidence [
     }
 }
 
+# Read the page title for a markdown file.
+#
+# Prefers TOML frontmatter (`title = "..."` inside a +++ delimited block at
+# the top of the file); falls back to the first ATX H1 (`# Title`) in the
+# body. Returns null if neither is present.
+export def read-page-title [file: string]: nothing -> any {
+    let content = (open $file --raw)
+    let lines = ($content | lines)
+
+    if ($lines | length) > 0 and ($lines | first) == "+++" {
+        # TOML frontmatter — collect lines until the closing delimiter, parse, return title.
+        let rest = ($lines | skip 1)
+        let close_idx = ($rest | enumerate | where {|p| $p.item == "+++"} | first | get -o index)
+        if $close_idx != null {
+            let toml_text = ($rest | take $close_idx | str join "\n")
+            let fm = (try { $toml_text | from toml } catch { null })
+            if $fm != null {
+                return ($fm | get -o title)
+            }
+        }
+    }
+
+    let heading = ($lines | where {|l| $l starts-with "# "} | first)
+    if $heading == null { null } else { $heading | str replace "# " "" }
+}
+
 # Collect all file entries from all topics in the structure.
 # Returns a list of records with: slug, quadrant, file, status, covers, exercises.
 export def all-file-entries [structure: record]: nothing -> list<record> {

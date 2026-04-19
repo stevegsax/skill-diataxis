@@ -1,5 +1,11 @@
-# The Diataxis Framework
-
++++
+title = "The Diataxis Framework"
+weight = 34
+description = "Understanding and applying the Diataxis quadrant rules"
+topic = "quadrants"
+covers = ["The two axes (action/cognition, acquisition/application)", "Why four quadrants and not three or five", "The most common mistake (confusing tutorials with how-to guides)", "How quadrant boundaries improve documentation quality"]
+detail = "Discursive. Connect to the reader's experience of bad documentation — tutorials that explain too much, reference docs that try to teach."
++++
 Diataxis is a framework for organizing documentation, created by Daniele
 Procida. The name comes from the Ancient Greek for "across" and "arrangement."
 It claims that all documentation falls into exactly four types, determined by

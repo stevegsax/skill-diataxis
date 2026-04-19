@@ -16,7 +16,7 @@ This project is part of a larger initiative at SAX to enhance our knowledge mana
 
 **Important:** The goal of this skill is to delegate documentation generation and management to the LLM. **Hand edits to markdown files will be overwritten unless you explicitly tell the robot what to do or avoid**. Most of your changes will probably be in `diataxis.toml`.
 
-**Note:** Page generation is currently integrated into the diataxis publishing script. This is probably a mistake — a future version will switch to a dedicated "publish" skill that delegates to a well-supported static site generator like Hugo or Jekyll.
+Publishing is handled by [Hugo](https://gohugo.io/). The `diataxis/` directory is a plain Hugo site — the skill authors the content (markdown, frontmatter, marimo notebooks) and Hugo builds the HTML. A small `Makefile` preprocesses marimo notebooks into WASM bundles (Hugo cannot do that on its own) and then invokes `hugo`. Layouts, navigation, styling, math, mermaid, and search come from whichever Hugo theme is configured in `hugo.toml`; the skill scaffolds a sensible default ([Hextra](https://imfing.github.io/hextra/)) but users can swap themes freely.
 
 See [`skill/SKILL.md`](skill/SKILL.md) for the instructions Claude loads when the skill is invoked.
 
@@ -25,17 +25,17 @@ See [`skill/SKILL.md`](skill/SKILL.md) for the instructions Claude loads when th
 **The documentation for this repository is itself authored with this skill.** The complete inputs (`diataxis.toml`, markdown, marimo exercises) and generated HTML live under [`examples/self-docs/`](examples/self-docs/). Rebuild it locally with:
 
 ```bash
-uv run diataxis build -d examples/self-docs
+make -C examples/self-docs build
 ```
 
 ## Requirements
 
 - Python 3.13+ and [uv](https://docs.astral.sh/uv/)
-- [pandoc](https://pandoc.org/)
+- [Hugo extended](https://gohugo.io/installation/) — renders the site
+- [Go](https://go.dev/) 1.21+ — needed by Hugo to resolve theme modules
 - [nushell](https://www.nushell.sh/) — for the deterministic check suite
-- [mermaid-cli](https://github.com/mermaid-js/mermaid-cli) (`mmdc`) — optional, only if sources contain mermaid diagrams
 
-This skill was developed on macOS. Paths, shell commands, and tooling assumptions (e.g. `~/Sites/`, zsh) will likely need adjustment to run on Windows or Linux.
+This skill was developed on macOS. Paths, shell commands, and tooling assumptions (e.g. zsh) will likely need adjustment to run on Windows or Linux.
 
 ## External tools
 
@@ -43,17 +43,25 @@ A key design insight of this project is that our computers already host tools fo
 
 `uv sync` installs the Python dependencies; the rest are installed separately.
 
-- **pandoc** — converts each markdown source to HTML5 using a bundled template, with MathJax enabled for LaTeX math
+- **Hugo** — renders the site. The skill stages a Hugo site from the authored content (markdown + frontmatter derived from `diataxis.toml`) and invokes `hugo` to produce the final HTML. Layouts, navigation, syntax highlighting, math, mermaid, and search all come from the chosen Hugo theme.
 - **nushell** (`nu`) — runs the deterministic check suite under `skill/checks/` that validates structure, cross-links, quadrant rules, and formatting before any LLM scoring pass
-- **mmdc** (mermaid-cli) — pre-renders mermaid fenced code blocks to SVG at build time; optional and skipped when not installed
-- **marimo** — exports each exercise `.py` notebook to a self-contained WASM HTML bundle that runs in-browser via Pyodide (Python dependency, no marimo server required at runtime)
+- **marimo** — exports each exercise `.py` notebook to a self-contained WASM HTML bundle that runs in-browser via Pyodide. Bundles live at `/exercises/<stem>/` as standalone pages with their own look and feel.
 - **check-jsonschema** — validates `diataxis.toml` against the bundled schema and verifies check-suite output against `check-schema.json` (dev-group dependency)
-- **jinja2** — renders `~/Sites/index.html` from `sites-index.html.j2` when publishing (Python dependency)
-- **uvicorn** — serves the `_build/` directory for `diataxis serve` and `serve-only` (Python dependency)
-
-In the generated site itself, **MathJax** is loaded in the browser to render LaTeX, and **Pyodide** is bundled inside each marimo exercise to run the Python runtime client-side.
 
 **Future directions:** The list above isn't exhaustive. We haven't added **textlint** or other style checkers, but nothing prevents it. The skill assumes a full system underneath — anything you could install and run yourself is also available to the robot.
+
+## Choosing a theme
+
+The first build scaffolds `<diataxis-dir>/site/hugo.toml` with [Hextra](https://imfing.github.io/hextra/) preconfigured. Hextra provides sidebar navigation, search, dark mode, KaTeX math, mermaid, syntax highlighting, and responsive layouts out of the box.
+
+To use a different theme, edit `site/hugo.toml` and replace the `module.imports` entry with any Hugo module theme (see [themes.gohugo.io](https://themes.gohugo.io/)). Then:
+
+```bash
+cd site && hugo mod get -u && cd ..
+uv run diataxis build
+```
+
+Because the stager writes standard Hugo frontmatter and generic semantic markdown, any convention-following theme renders the content correctly. Theme-specific features (custom nav, search, etc.) are the theme's concern.
 
 ## Install
 
@@ -74,7 +82,7 @@ Manages the full lifecycle of Diataxis-structured documentation:
 - **Generate** — creates content across all four Diataxis quadrants (tutorials, how-to guides, reference, explanation)
 - **Score** — runs a deterministic nushell check suite, then an LLM qualitative pass against the structure document
 - **Revise** — updates structure first, then content, preserving user feedback in guidance fields
-- **Build** — converts markdown to HTML via pandoc, pre-renders mermaid diagrams to SVG, exports marimo exercises to self-contained WASM bundles, and injects sidebar navigation
+- **Build** — `make build` (or `hugo` directly). The `diataxis/` directory is a plain Hugo site; layouts, navigation, and styling come from the chosen theme. Marimo exercises are exported to self-contained WASM bundles by the Makefile and served as standalone pages.
 
 ## Project layout
 
@@ -83,21 +91,20 @@ skill-diataxis/
 ├── skill/
 │   ├── SKILL.md                     # Skill instructions
 │   ├── assets/
-│   │   ├── style.css                # Standard stylesheet
-│   │   ├── template.html            # Pandoc HTML template
-│   │   ├── diataxis-schema.json     # JSON Schema for diataxis.toml
-│   │   └── sites-index.html.j2      # Jinja2 template for ~/Sites/index.html
+│   │   └── diataxis-schema.json     # JSON Schema for diataxis.toml
+│   ├── templates/                   # Scaffolded into new diataxis/ projects
+│   │   ├── Makefile                 # make build / make serve
+│   │   ├── hugo.toml                # Hugo config with content mounts
+│   │   └── go.mod                   # Hugo module manifest
 │   ├── references/
 │   │   ├── quadrants.md             # Diataxis quadrant rules
 │   │   ├── structure-schema.md      # diataxis.toml schema
 │   │   ├── scoring.md               # Scoring rubric
-│   │   └── build-pipeline.md        # Build/serve details
-│   ├── checks/
-│   │   ├── run-checks.nu            # Deterministic check runner
-│   │   ├── check-schema.json        # JSON Schema for check output
-│   │   └── check-*.nu               # Individual structural/format checks
-│   └── scripts/
-│       └── build.py                 # Build pipeline and CLI
+│   │   └── build-pipeline.md        # Hugo + Makefile pipeline details
+│   └── checks/
+│       ├── run-checks.nu            # Deterministic check runner
+│       ├── check-schema.json        # JSON Schema for check output
+│       └── check-*.nu               # Individual structural/format checks
 ├── examples/
 │   └── self-docs/                   # Worked example: documents this project
 ├── evals/
@@ -109,11 +116,11 @@ skill-diataxis/
 
 ## Authoring format
 
-- Static prose is authored in **Markdown**
+- Static prose is authored in **Markdown** using generic, semantic HTML5 — no skill-specific CSS classes. Any Hugo theme renders the content correctly.
 - Interactive exercises are authored as **marimo** `.py` notebooks, exported to self-contained WASM bundles that run in-browser via Pyodide (no marimo server required)
-- Diagrams are authored as **mermaid** fenced code blocks, pre-rendered to SVG at build time
-- All math uses **LaTeX** notation (`$...$` inline, `$$...$$` display), rendered via MathJax
-- Deterministic transforms (markdown to HTML, schema validation, structural checks) use tools like pandoc, `check-jsonschema`, and nushell — not LLM generation
+- Diagrams are authored as **mermaid** fenced code blocks, rendered client-side by the theme
+- All math uses **LaTeX** notation (`$...$` inline, `$$...$$` display), rendered by the theme (KaTeX or MathJax depending on the theme)
+- Deterministic transforms (markdown to HTML, schema validation, structural checks) use tools like Hugo, `check-jsonschema`, and nushell — not LLM generation
 
 ## Documentation structure
 
@@ -122,42 +129,41 @@ Each Diataxis project lives in a `diataxis/` directory:
 ```
 project-root/
 └── diataxis/
-    ├── diataxis.toml          # Source of truth
-    ├── index.md               # Introductory page
+    ├── diataxis.toml          # Source of truth (authored)
+    ├── hugo.toml              # Hugo config (user-owned after scaffold)
+    ├── go.mod                 # Hugo module manifest (user-owned)
+    ├── Makefile               # Build orchestration (user-owned)
+    ├── README.md              # Guard file ("this is generated")
+    ├── index.md               # Homepage (authored, has Hugo frontmatter)
     ├── scores.toml            # Scoring history across runs
-    ├── tutorials/
+    ├── tutorials/             # Authored markdown with Hugo frontmatter
     ├── howto/
     ├── reference/
     ├── explanation/
-    ├── exercises/             # Marimo notebooks
-    └── _build/                # Generated HTML
+    ├── exercises/             # Authored marimo notebooks
+    ├── layouts/               # Optional theme overrides (user-owned)
+    ├── static/exercises/      # WASM bundles (regenerated by `make exercises`)
+    └── public/                # Rendered site — deploy this
 ```
 
 The `diataxis.toml` structure document defines topics, what each file should cover, and guidance notes that serve as both the generation brief and scoring criteria. `scores.toml` accumulates the result of each scoring pass so regressions across runs are visible over time.
 
-## CLI
+## Building
+
+The `diataxis/` directory is a plain Hugo site with one extra step: marimo notebooks must be exported to WASM bundles before Hugo runs. A small `Makefile` handles that:
 
 ```bash
-# Build HTML from a diataxis/ directory
-uv run diataxis build
-
-# Build and start a local static server on :8000
-uv run diataxis serve
-
-# Start the static server without rebuilding
-uv run diataxis serve-only
-
-# Specify a different directory
-uv run diataxis build -d path/to/diataxis
-
-# Publish the built site to ~/Sites/<project-slug>/ and refresh ~/Sites/index.html
-uv run diataxis publish
+cd diataxis
+make build           # export exercises + hugo
+make serve           # export exercises + hugo server (live reload)
+make exercises       # export exercises only
+make clean           # remove public/ and resources/
 ```
 
-All subcommands accept `-d <path>` to point at a non-default diataxis directory. For the bundled self-documentation example, pass the directory explicitly:
+For the bundled self-documentation example:
 
 ```bash
-uv run diataxis publish -d examples/self-docs
+make -C examples/self-docs build
 ```
 
-`publish` rebuilds the site, then copies `_build/` to `~/Sites/<slug>/`, where `<slug>` is derived from `project.name` in `diataxis.toml`. Any existing contents at that destination are removed and replaced. It then regenerates `~/Sites/index.html` from a Jinja2 template by scanning each `~/Sites/*/.diataxis-meta.json` manifest. Pass `--sites-dir` to target a different location.
+Users who prefer to skip `make` can run `hugo` directly after ensuring exercises are exported. The rendered site lands at `diataxis/public/`. Deploy it with any Hugo-compatible workflow (`hugo deploy`, Netlify, GitHub Pages, rsync, etc.). See [Hugo's hosting docs](https://gohugo.io/hosting-and-deployment/) for the full catalog.

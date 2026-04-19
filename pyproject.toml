@@ -1,17 +1,12 @@
 [project]
 name = "skill-diataxis"
-version = "0.5.1"
+version = "0.6.0"
 description = "Diataxis documentation skill — create, revise, score, and publish structured documentation"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "jinja2",
     "marimo",
-    "uvicorn",
 ]
-
-[project.scripts]
-diataxis = "skill.scripts.build:main"
 
 [tool.uv]
 package = true
@@ -20,7 +15,7 @@ package = true
 include = ["skill*"]
 
 [tool.setuptools.package-data]
-skill = ["assets/*", "assets/*.j2", "references/*"]
+skill = ["assets/*", "references/*", "templates/*"]
 
 [dependency-groups]
 dev = [

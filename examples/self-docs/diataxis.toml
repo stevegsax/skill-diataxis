@@ -21,13 +21,13 @@ order = 1
 file = "tutorials/first-project.md"
 status = "draft"
 covers = [
-    "Installing prerequisites (uv, pandoc, mmdc)",
+    "Installing prerequisites (uv, Hugo extended, Go)",
     "Creating a diataxis/ directory and diataxis.toml",
     "Adding a first topic with a tutorial file",
-    "Building and viewing the HTML output",
+    "Building the site with `make build` and viewing it",
 ]
 detail = "Step-by-step from an empty directory to a rendered page in the browser. Use a concrete example topic throughout."
-guidance = "Start with the install commands (uv, pandoc, mmdc for mermaid), then walk through creating diataxis.toml by hand. Keep the example topic simple — 'Getting Started with Widgets' or similar. Show the build output after each step so the learner always sees results. Note that the generated diataxis/ directory is output-only and includes a README.md stating this."
+guidance = "Start with the install commands (uv, Hugo extended, Go for Hugo module resolution), then walk through creating diataxis.toml by hand. Keep the example topic simple — 'Getting Started with Widgets' or similar. Explain that the `diataxis/` directory is a plain Hugo site — `hugo.toml`, `go.mod`, and a `Makefile` are scaffolded alongside `diataxis.toml` and are user-owned thereafter. Run `make build` once the structure document and a tutorial file are complete, and show the make output so the learner sees the exercise export and Hugo summary. The final HTML lives at `diataxis/public/`. Note that the generated `diataxis/` directory is output-only and includes a README.md stating this."
 exercises = ["exercises/build-your-first-project.py"]
 
 [topics.getting-started.howto]
@@ -35,12 +35,13 @@ file = "howto/install-and-setup.md"
 status = "draft"
 covers = [
     "Installing uv",
-    "Installing pandoc",
-    "Installing mmdc (mermaid CLI)",
-    "Verifying the diataxis CLI works",
+    "Installing Hugo extended",
+    "Installing Go (required for Hugo module resolution)",
+    "Installing make",
+    "Running the marimo Python dependency via uv",
 ]
 detail = "Concise install steps for macOS and Linux. No explanation of what the tools do."
-guidance = "Title: 'How to Install and Set Up'. Assume the reader knows what uv and pandoc are. Include mmdc for mermaid diagram rendering. Link to the explanation doc for background."
+guidance = "Title: 'How to Install and Set Up'. Assume the reader knows what uv is. Hugo must be the extended distribution (Hextra and most docs themes assume it). Go 1.21+ is required so Hugo can resolve theme modules. `make` is used to orchestrate the marimo export → hugo sequence. Link to the explanation doc for background on why these tools are needed."
 
 [topics.structure-document]
 title = "The Structure Document"
@@ -126,28 +127,30 @@ order = 4
 file = "howto/build-and-serve.md"
 status = "draft"
 covers = [
-    "Building HTML with uv run diataxis build",
-    "Serving locally with uv run diataxis serve",
-    "Rebuilding after content changes",
-    "Using a custom diataxis directory with -d",
+    "Building the site with `make build`",
+    "Running live reload with `make serve`",
+    "Exporting marimo notebooks with `make exercises`",
+    "Cleaning generated output with `make clean`",
+    "Switching the Hugo theme by editing hugo.toml",
+    "Where the rendered output lives and how to deploy it",
 ]
-detail = "Each task gets a numbered procedure. Show the expected terminal output. All commands use uv run."
-guidance = "Title: 'How to Build and Serve Documentation'. All commands go through uv run. The -d flag is per-subcommand — it goes after the subcommand name. Serve starts a single static server on port 8000; exercises run in the browser via Pyodide, so there is no separate marimo process. Note that mermaid blocks are pre-rendered to SVG automatically if mmdc is installed."
+detail = "Each task gets a numbered procedure. Show the expected terminal output."
+guidance = "Title: 'How to Build and Serve Documentation'. Commands run from inside the `diataxis/` directory (or with `make -C diataxis <target>`). Explain that Hugo itself renders the site; the Makefile exists only to preprocess marimo notebooks into WASM bundles because Hugo cannot do that. `make serve` is `hugo server` with live reload — edits to markdown, hugo.toml, layouts, and diataxis.toml are picked up automatically because Hugo's content mounts point straight at the authored files. Mention that the rendered site lives at `diataxis/public/` and there is no custom publish command — point to standard Hugo deployment workflows (`hugo deploy`, Netlify, etc.). Cover swapping the theme by replacing the module import in `hugo.toml` and running `hugo mod get -u`."
 
 [topics.build-pipeline.reference]
 file = "reference/cli-reference.md"
 status = "draft"
 covers = [
-    "uv run diataxis build — flags and behavior",
-    "uv run diataxis serve — flags and behavior",
-    "uv run diataxis serve-only — flags and behavior",
-    "uv run diataxis publish — flags and behavior",
-    "The -d flag for custom directories (per-subcommand)",
-    "WASM exercise export and mtime-based caching",
-    "Mermaid pre-rendering behavior (automatic if mmdc is installed)",
+    "make build — what it does",
+    "make serve — what it does",
+    "make exercises — what it does",
+    "make clean — what it does",
+    "Running `hugo` directly without make",
+    "WASM exercise export behavior and caching (via make's dependency graph)",
+    "How the default Hextra theme is wired in and how to swap it",
 ]
-detail = "One subsection per subcommand. Use a consistent format: synopsis, description, flags table, examples."
-guidance = "This should look like a man page. Neutral description, no opinions. Include the default static port (8000) and directory path. Document that the -d flag is per-subcommand and must follow the subcommand name. Note that mermaid diagrams are rendered to SVG in _build/assets/mermaid/ when mmdc is available, and that exercises are exported as self-contained WASM bundles under _build/exercises/ with mtime-based caching across rebuilds. Cross-link to the build-and-serve how-to and install-and-setup how-to."
+detail = "One subsection per target. Use a consistent format: synopsis, description, examples."
+guidance = "Title: 'Build Commands Reference' (or similar — the topic slug `cli-reference` is historical; there is no custom CLI). This should look like a man page. Neutral description, no opinions. Document the four Make targets (`build`, `serve`, `exercises`, `clean`). Explain that commands run from inside the `diataxis/` directory or via `make -C diataxis`. Note that the WASM bundles under `static/exercises/` are cached by the Makefile's dependency graph: a bundle is regenerated only when its `.py` source is newer than the existing `index.html`. Note that users can bypass `make` and run `hugo` directly after `make exercises`. Note that the default Hugo theme is Hextra, imported as a Hugo module, and that swapping themes is an edit to `hugo.toml` plus `hugo mod get -u`. Cross-link to the build-and-serve how-to and install-and-setup how-to."
 
 [topics.scoring]
 title = "Scoring Documentation"

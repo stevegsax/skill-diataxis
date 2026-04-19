@@ -1,5 +1,11 @@
-# Scoring Rubric
-
++++
+title = "Scoring Rubric"
+weight = 53
+description = "How to evaluate documentation quality using the scoring rubric"
+topic = "scoring"
+covers = ["The 1-5 score scale with definitions", "Project-level criteria (decomposition, balance, audience, completeness)", "Structural criteria (coverage, detail compliance, guidance adherence, cross-linking)", "Quadrant-level criteria per type", "The scores.toml output format"]
+detail = "Tabular. One table per scoring level. Include the comparison format."
++++
 ## Score scale
 
 | Score | Meaning |

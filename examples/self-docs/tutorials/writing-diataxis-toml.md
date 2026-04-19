@@ -1,5 +1,11 @@
-# Writing diataxis.toml
-
++++
+title = "Writing diataxis.toml"
+weight = 21
+description = "How diataxis.toml works and how to maintain it"
+topic = "structure-document"
+covers = ["Creating the [project] section", "Defining topics with slugs, titles, and ordering", "Adding quadrant entries with covers, detail, and guidance", "Linking exercises to tutorials"]
+detail = "Walk through building a real diataxis.toml from scratch. Show the TOML after each addition."
++++
 In this tutorial, we will build a complete `diataxis.toml` for a recipe
 application, adding topics and quadrant entries one at a time. After each
 addition, we will look at what changed.

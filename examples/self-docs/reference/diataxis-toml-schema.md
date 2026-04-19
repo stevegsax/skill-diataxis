@@ -1,5 +1,11 @@
-# diataxis.toml Schema
-
++++
+title = "diataxis.toml Schema"
+weight = 23
+description = "How diataxis.toml works and how to maintain it"
+topic = "structure-document"
+covers = ["All project-level fields (name, description, type, audience, prerequisites)", "Topic fields (title, description, complexity, prerequisites, order)", "Quadrant fields (file, status, covers, detail, guidance, exercises)", "Status values (planned, draft, review, complete)"]
+detail = "Tabular, one field per row, with type and description. No narrative."
++++
 ## Project fields
 
 | Field | Required | Type | Description |

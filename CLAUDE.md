@@ -5,31 +5,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build and Development Commands
 
 ```bash
-uv sync                          # Install dependencies
-uv run diataxis build            # Build HTML from diataxis/ directory
-uv run diataxis serve            # Build + start static server (:8000)
-uv run diataxis serve-only       # Start static server without rebuilding
-uv run diataxis build -d <path>  # Use a different diataxis directory
-stylelint skill/assets/style.css # Lint CSS
+uv sync                             # Install Python dependencies (marimo)
+make -C examples/self-docs build    # Build the self-docs example site
+make -C examples/self-docs serve    # Live-reload server for the self-docs example
 ```
 
-Requires Python 3.13+, `pandoc`, and `uv`.
+Requires Python 3.13+, [Hugo extended](https://gohugo.io/installation/), [Go](https://go.dev/) 1.21+ (for Hugo module resolution), and `uv`.
 
 ## Architecture
 
-This is a Claude Code skill that manages Diataxis-structured documentation. It has two roles:
+This is a Claude Code skill that manages Diataxis-structured documentation. Two independent pieces:
 
 1. **Skill instructions** (`skill/SKILL.md` + `skill/references/`) — read by Claude when the skill triggers, guiding it through a six-step workflow: scope with grill-me, create `diataxis.toml` structure, generate content, score, revise, build.
 
-2. **Build pipeline** (`skill/scripts/build.py`) — an installable CLI (`diataxis`) that transforms authored markdown + marimo notebooks into a fully static HTML site. The pipeline reads `diataxis.toml` as its manifest, runs pandoc with a bundled template (`skill/assets/template.html`), exports each marimo exercise to a self-contained WASM bundle under `_build/exercises/<stem>/`, injects sidebar navigation and exercise iframes (relative paths into those bundles), and outputs to `_build/`.
+2. **Publishing scaffolds** (`skill/templates/`) — a `Makefile`, `hugo.toml`, and `go.mod` that the skill copies into a new `diataxis/` directory during Step 2. Once scaffolded, the skill does not touch them again; they are user-owned.
 
-The key architectural concept: `diataxis.toml` is the single source of truth. Its `covers`, `detail`, and `guidance` fields per file serve as both the generation brief (telling Claude what to write) and the scoring rubric (evaluating what was written). User revision feedback is integrated into the `guidance` fields before content changes, preventing regressions on regeneration.
+The `diataxis/` directory is a plain Hugo site. `hugo.toml` uses content mounts so the authored quadrant paths (`tutorials/`, `howto/`, `reference/`, `explanation/`) show up where Hugo expects them. `diataxis.toml` is mounted as a Hugo data file. Marimo notebooks under `exercises/` are exported to `static/exercises/<stem>/` by the `Makefile` (the one thing Hugo cannot do on its own). The build itself is just `hugo`.
+
+The key architectural concept: `diataxis.toml` is the single editorial source of truth. Its `covers`, `detail`, and `guidance` fields per file serve as both the generation brief (telling Claude what to write) and the scoring rubric (evaluating what was written). User revision feedback is integrated into the `guidance` fields before content changes, preventing regressions on regeneration.
 
 ## Conventions
 
-- TOML quadrant keys match directory names: `tutorials`, `howto`, `reference`, `explanation`. The constant `QUADRANT_DIRS` in `build.py` is the single source for these.
-- All math uses LaTeX notation (`$...$` inline, `$$...$$` display), rendered via MathJax.
-- Deterministic transforms (markdown to HTML, etc.) use tools (pandoc, tidy, jq), not LLM generation.
-- Interactive exercises are marimo `.py` notebooks exported to self-contained WASM bundles via `marimo export html-wasm`. They run in-browser via Pyodide and must only import Pyodide-compatible packages.
-- The build script post-processes pandoc output to convert `.md` hrefs to `.html`.
-- CSS changes must pass `stylelint` with the project `.stylelintrc.json`.
+- TOML quadrant keys match directory names: `tutorials`, `howto`, `reference`, `explanation`.
+- All math uses LaTeX notation (`$...$` inline, `$$...$$` display), rendered by the chosen Hugo theme (KaTeX for Hextra).
+- Authored markdown includes Hugo frontmatter (`+++ title = "..." weight = ... +++`) at the top and never repeats the title as an H1 in the body.
+- Authored markdown uses generic semantic HTML5 — no skill-specific CSS classes. Any Hugo theme renders it correctly.
+- Deterministic transforms (markdown to HTML, structural checks, schema validation) use tools (Hugo, `check-jsonschema`, nushell), not LLM generation.
+- Interactive exercises are marimo `.py` notebooks under `diataxis/exercises/`. The Makefile exports each one to a self-contained WASM bundle at `diataxis/static/exercises/<stem>/` via `marimo export html-wasm`. They run in-browser via Pyodide, serve as standalone pages at `/exercises/<stem>/`, and must only import Pyodide-compatible packages.
+- `hugo.toml`, `go.mod`, `Makefile`, and `layouts/` under `diataxis/` are user-owned and committed. Everything else (`public/`, `resources/`, `static/exercises/`) is regenerated by `make build` and gitignored.

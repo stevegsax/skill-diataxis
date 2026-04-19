@@ -1,5 +1,11 @@
-# Why Structure First
-
++++
+title = "Why Structure First"
+weight = 24
+description = "How diataxis.toml works and how to maintain it"
+topic = "structure-document"
+covers = ["Why the structure document exists", "Why structure changes before content", "How guidance fields prevent regressions", "The relationship between covers and scoring", "Why diataxis/ is output-only and separate from other docs"]
+detail = "Discuss the design rationale. Connect to the user's experience of documentation that drifts or regresses. Use a mermaid diagram to illustrate the revision cycle."
++++
 The most distinctive aspect of this tool's workflow is the insistence that
 `diataxis.toml` is updated before any content changes. This is a deliberate
 design decision, not a bureaucratic hurdle.

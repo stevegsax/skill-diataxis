@@ -1,56 +1,91 @@
-# How to Build and Serve Documentation
++++
+title = "How to Build and Serve Documentation"
+weight = 42
+description = "The build pipeline, CLI commands, and local development workflow"
+topic = "build-pipeline"
+covers = ["Building the site with `make build`", "Running live reload with `make serve`", "Exporting marimo notebooks with `make exercises`", "Cleaning generated output with `make clean`", "Switching the Hugo theme by editing hugo.toml", "Where the rendered output lives and how to deploy it"]
+detail = "Each task gets a numbered procedure. Show the expected terminal output."
++++
+All commands run from inside the `diataxis/` directory (or use `make -C diataxis <target>` from elsewhere).
 
-## Build HTML
-
-From your project root (the directory containing `diataxis/`):
-
-```bash
-uv run diataxis build
-```
-
-Output appears in `diataxis/_build/`. Each markdown file becomes an HTML page
-with navigation and styling. If any markdown files contain ` ```mermaid ` blocks
-and `mmdc` is installed, the diagrams are pre-rendered to SVG in
-`_build/assets/mermaid/`.
-
-## Serve locally
+## Build the site
 
 ```bash
-uv run diataxis serve
+cd diataxis
+make build
 ```
 
-This builds first, then starts a static file server on
-`http://localhost:8000`. Exercises run in the browser via Pyodide, so there
-is no separate server process.
+`make build` exports any marimo notebooks to self-contained WASM bundles
+under `static/exercises/`, then runs `hugo` into `public/`. Rendered output
+lives at `diataxis/public/`.
 
-Open `http://localhost:8000` in your browser. Press Ctrl+C to stop the server.
-
-## Serve without rebuilding
-
-If you've already built and just want to restart the server:
+## Serve locally with live reload
 
 ```bash
-uv run diataxis serve-only
+make serve
 ```
 
-## Rebuild after changes
+This exports exercises, then runs `hugo server`. Hugo prints the URL it
+bound to (usually `http://localhost:1313`).
 
-After editing markdown files or `diataxis.toml`, rebuild:
+Edits to authored markdown, `diataxis.toml`, `hugo.toml`, and anything
+under `layouts/` are picked up automatically, because Hugo's content mounts
+point straight at the authored files — there is no intermediate staging
+step.
+
+Press Ctrl+C to stop the server.
+
+## Export exercises only
 
 ```bash
-uv run diataxis build
+make exercises
 ```
 
-Landing pages and navigation are regenerated from `diataxis.toml` on every
-build. The `_build/` directory is replaced entirely.
+Runs the marimo exports without invoking `hugo`. Useful when iterating on a
+notebook and you don't want a full rebuild. After this, `hugo` or
+`hugo server` (run directly) will see the updated WASM bundles.
 
-## Use a custom directory
-
-If your diataxis content is not in `./diataxis`, pass `-d` after the
-subcommand:
+## Clean generated output
 
 ```bash
-uv run diataxis build -d path/to/my-diataxis
+make clean
 ```
 
-For the full CLI reference, see [CLI Reference](../reference/cli-reference.html).
+Removes `public/` (Hugo output) and `resources/` (Hugo cache). Leaves
+`static/exercises/` alone because re-exporting WASM bundles is slow.
+
+## Switch the Hugo theme
+
+The scaffolded `hugo.toml` wires in the Hextra theme via a Hugo module. To
+use a different theme, edit `hugo.toml` and replace the `module.imports`
+entry with any Hugo module theme from https://themes.gohugo.io/. Then
+refresh the modules and rebuild:
+
+```bash
+hugo mod get -u
+make build
+```
+
+Because the authored markdown uses standard Hugo frontmatter and generic
+semantic markdown, any convention-following theme renders the content.
+
+## Run `hugo` directly
+
+The Makefile is convenience. After `make exercises`, you can run `hugo` or
+`hugo server` yourself:
+
+```bash
+make exercises
+hugo server
+```
+
+## Deploy
+
+There is no custom publish command. The deployable site is
+`diataxis/public/`. Deploy it with any standard Hugo workflow:
+`hugo deploy` (S3, Azure, GCS), Netlify, Vercel, Cloudflare Pages, GitHub
+Pages, or `rsync`. See https://gohugo.io/hosting-and-deployment/ for the
+full catalog.
+
+For the detailed reference, see
+[Build Commands Reference](../reference/cli-reference/).

@@ -1,5 +1,11 @@
-# How to Score and Revise Documentation
-
++++
+title = "How to Score and Revise Documentation"
+weight = 52
+description = "How to evaluate documentation quality using the scoring rubric"
+topic = "scoring"
+covers = ["Running a scoring pass", "Reading scores.toml output", "Identifying cross-contamination", "Revising based on scores"]
+detail = "Task-focused. Each task gets a short procedure."
++++
 ## Run a scoring pass
 
 Ask Claude to score the documentation:

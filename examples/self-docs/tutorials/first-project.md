@@ -1,20 +1,28 @@
-# Your First Diataxis Project
-
++++
+title = "Your First Diataxis Project"
+weight = 11
+description = "Installation, first project, and the basic workflow"
+topic = "getting-started"
+covers = ["Installing prerequisites (uv, Hugo extended, Go)", "Creating a diataxis/ directory and diataxis.toml", "Adding a first topic with a tutorial file", "Building the site with `make build` and viewing it"]
+detail = "Step-by-step from an empty directory to a rendered page in the browser. Use a concrete example topic throughout."
++++
 In this tutorial, we will create a Diataxis documentation project from scratch,
-add a topic with a tutorial, and build it into a browsable HTML site. Along the
-way we will see how `diataxis.toml` drives the entire process.
+add a topic with a tutorial, and build it into a browsable Hugo site. Along the
+way we will see how `diataxis.toml` drives the content and how Hugo handles the
+publishing.
 
 ## Prerequisites
 
 You will need:
 
 - `uv` (Python package manager)
-- `pandoc` (document converter)
-- `mmdc` (mermaid CLI, for diagram rendering — optional)
+- Hugo extended (https://gohugo.io/installation/)
+- Go 1.21+ (Hugo uses Go modules to fetch themes)
+- `make` (already installed on most Unix systems)
 - The `skill-diataxis` project cloned locally
 
 If you don't have these installed, see
-[How to Install and Set Up](../howto/install-and-setup.html).
+[How to Install and Set Up](../howto/install-and-setup/).
 
 ## Step 1: Create the project directory
 
@@ -67,16 +75,42 @@ detail = "Step-by-step with code examples. Show output after every step."
 guidance = "Use a simple text widget for the first example. Keep it to three steps."
 ```
 
-Notice the `covers` field — this is the list of things the tutorial must address.
-It will be used later when scoring the documentation.
+The `covers` field is the list of things the tutorial must address. It is also
+used later when scoring the documentation.
 
-## Step 3: Write the tutorial
+## Step 3: Add the publishing scaffolds
 
-Create `diataxis/tutorials/hello-widget.md`:
+Copy three files into `diataxis/` from the skill's templates — a `Makefile`,
+a `hugo.toml`, and a `go.mod`:
+
+```bash
+cp <skill-dir>/skill/templates/Makefile diataxis/
+cp <skill-dir>/skill/templates/hugo.toml diataxis/
+cp <skill-dir>/skill/templates/go.mod diataxis/
+```
+
+Edit `diataxis/hugo.toml` and replace `{{PROJECT_NAME}}` and
+`{{PROJECT_DESCRIPTION}}` with your values. Edit `diataxis/go.mod` and
+replace `{{MODULE_PATH}}` with a unique module path — for a local project,
+`diataxis.local/widget-handbook` is fine.
+
+These three files are yours to edit from here on. The skill will never
+rewrite them.
+
+## Step 4: Write the tutorial
+
+Create `diataxis/tutorials/hello-widget.md` with Hugo frontmatter at the top
+followed by the tutorial body:
 
 ```markdown
-# Hello Widget
-
++++
+title = "Hello Widget"
+weight = 11
+description = "First steps with the Widget library"
+topic = "getting-started"
+covers = ["Installing the Widget library", "Creating your first widget", "Rendering a widget to the console"]
+detail = "Step-by-step with code examples. Show output after every step."
++++
 In this tutorial, we will install the Widget library, create a simple text
 widget, and render it to the console.
 
@@ -111,37 +145,46 @@ Call the render method:
 You have created and rendered your first widget.
 ```
 
-## Step 4: Build the HTML
+Notice the file body has no `# Hello Widget` heading — Hugo's theme renders
+the title from the frontmatter, and repeating it in the body would show a
+duplicate.
 
-Run the build command from your project root:
+## Step 5: Build the site
 
-```bash
-uv run diataxis build
-```
-
-You should see:
-
-```
-Building from /path/to/my-docs-project/diataxis
-Copied standard assets.
-Generating landing pages...
-Converting markdown to HTML...
-  index.md -> index.html
-  hello-widget.md -> hello-widget.html
-  index.md -> index.html
-Build complete: /path/to/my-docs-project/diataxis/_build
-```
-
-## Step 5: View the result
-
-Start the local server:
+From `diataxis/`:
 
 ```bash
-uv run diataxis serve-only
+cd diataxis
+make build
 ```
 
-Open `http://localhost:8000` in your browser. You should see your Widget Handbook
-with a sidebar showing the Tutorials section and a link to "Getting Started."
+`make build` does two things: it exports any marimo notebooks to
+self-contained WASM bundles under `static/exercises/`, and it runs `hugo`.
+You should see something like:
+
+```
+hugo --cleanDestinationDir
+Start building sites … 
+                  │ EN
+──────────────────┼─────
+ Pages            │   4
+ ...
+```
+
+The rendered site lands at `diataxis/public/`.
+
+## Step 6: View the result
+
+Start the live-reload Hugo server:
+
+```bash
+make serve
+```
+
+Open the URL `hugo server` prints (usually `http://localhost:1313`). You
+should see your Widget Handbook with the Hextra theme — sidebar navigation
+auto-built from your section, dark-mode toggle, search, and a tutorials
+section listing "Hello Widget."
 
 Press Ctrl+C to stop the server.
 
@@ -151,13 +194,21 @@ You have created a Diataxis documentation project with:
 
 - A `diataxis.toml` structure document defining one topic
 - A tutorial following Diataxis rules (action-oriented, shows results)
-- HTML output with navigation and styling
+- A plain Hugo site with a default theme, a Makefile, and a Go module manifest
+- Rendered HTML at `diataxis/public/`, ready to deploy
 
-Notice the `diataxis/` directory also contains a `README.md` explaining that
-these files are output artifacts — not authoritative sources. The Diataxis
-documentation exists alongside your project's other docs, not instead of them.
+The `diataxis/` directory is a normal Hugo site. You can swap themes by
+editing `hugo.toml`, add layout overrides under `layouts/`, or run `hugo`
+directly after `make exercises`. Anything the skill generates (markdown,
+marimo notebook sources) lives in the quadrant directories; anything Hugo
+generates (`public/`, `resources/`) is gitignored. The publishing scaffolds
+(`Makefile`, `hugo.toml`, `go.mod`, `layouts/`) are yours.
 
 To learn more about the structure document, see the
-[Writing diataxis.toml](writing-diataxis-toml.html) tutorial. For the full
-field reference, see the
-[diataxis.toml Schema](../reference/diataxis-toml-schema.html).
+[Writing diataxis.toml](../tutorials/writing-diataxis-toml/) tutorial. For
+the full field reference, see the
+[diataxis.toml Schema](../reference/diataxis-toml-schema/).
+
+## Exercises
+
+- [Build Your First Project](/exercises/build-your-first-project/)

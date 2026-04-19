@@ -1,5 +1,11 @@
-# How to Install and Set Up
-
++++
+title = "How to Install and Set Up"
+weight = 12
+description = "Installation, first project, and the basic workflow"
+topic = "getting-started"
+covers = ["Installing uv", "Installing Hugo extended", "Installing Go (required for Hugo module resolution)", "Installing make", "Running the marimo Python dependency via uv"]
+detail = "Concise install steps for macOS and Linux. No explanation of what the tools do."
++++
 ## Install uv
 
 macOS / Linux:
@@ -14,68 +20,95 @@ Verify:
 uv --version
 ```
 
-## Install pandoc
+## Install Hugo extended
+
+Use the **extended** distribution — Hextra and most docs themes assume it.
 
 macOS:
 
 ```bash
-brew install pandoc
+brew install hugo
 ```
 
 Linux (Debian/Ubuntu):
 
 ```bash
-sudo apt install pandoc
+sudo snap install hugo
 ```
+
+Or download a release from https://github.com/gohugoio/hugo/releases.
 
 Verify:
 
 ```bash
-pandoc --version
+hugo version
 ```
 
-## Install mmdc (mermaid CLI)
+The output must include `extended`. For example:
 
-mmdc renders mermaid diagram blocks to SVG during the build. Optional — if
-not installed, mermaid blocks are left as code blocks in the output.
+```
+hugo v0.160.1+extended ...
+```
+
+## Install Go
+
+Hugo resolves themes through Go modules, so a Go toolchain (1.21+) must be on
+`PATH`.
 
 macOS:
 
 ```bash
-brew install mermaid-cli
+brew install go
 ```
 
-Linux (npm):
+Linux (Debian/Ubuntu):
 
 ```bash
-npm install -g @mermaid-js/mermaid-cli
+sudo apt install golang
+```
+
+Or download a release from https://go.dev/dl/.
+
+Verify:
+
+```bash
+go version
+```
+
+## Install make
+
+`make` is preinstalled on macOS (via Xcode Command Line Tools) and on most
+Linux distributions. If it is missing:
+
+macOS:
+
+```bash
+xcode-select --install
+```
+
+Linux (Debian/Ubuntu):
+
+```bash
+sudo apt install make
 ```
 
 Verify:
 
 ```bash
-mmdc --version
+make --version
 ```
 
-## Install the diataxis CLI
+## Install marimo
 
-From the skill-diataxis project directory:
+`marimo` is a Python dependency, pulled in by `uv sync`:
 
 ```bash
+cd /path/to/skill-diataxis
 uv sync
 ```
 
-Verify:
-
-```bash
-uv run diataxis --help
-```
-
-You should see:
-
-```
-usage: diataxis [-h] [-d DIR] {build,serve,serve-only} ...
-```
+It is exposed as `uv run marimo` — the Makefile invokes it that way, so no
+additional PATH setup is required.
 
 For background on why these tools are needed, see
-[Why Structure First](../explanation/why-structure-first.html).
+[Why Structure First](../explanation/why-structure-first/).

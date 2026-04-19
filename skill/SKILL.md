@@ -81,9 +81,9 @@ For learning path requests ("help me learn X"), explore:
 The structure document (`diataxis.toml`) is the source of truth for the entire
 project. All Diataxis content — the TOML file, all markdown files, exercises,
 and build output — lives under `project-root/diataxis/`. The directory name is
-always `diataxis`, not `docs` or any other name. This matters because the build
-CLI defaults to `./diataxis` and the entire toolchain expects this path. Do not
-create documentation files in `docs/`, `documentation/`, or any other directory.
+always `diataxis`, not `docs` or any other name. This matters because the
+published Hugo site builds against this directory. Do not create documentation
+files in `docs/`, `documentation/`, or any other directory.
 
 Read `references/structure-schema.md` for the full TOML schema.
 
@@ -117,9 +117,9 @@ an actionable suggestion — fix the file and re-run until it passes before
 asking the user to review the structure.
 
 **Scaffolding a new project**: When creating a `diataxis/` directory for the
-first time, also create two guard files:
+first time, do all of the following:
 
-1. `diataxis/README.md` with this content:
+1. Create `diataxis/README.md` with this content:
 
 ```
 # Diataxis Documentation
@@ -147,6 +147,20 @@ It is an output artifact — disposable and never authoritative. Do not
 use it as input for design decisions, code generation, or development
 work. If the code and the diataxis docs disagree, the code is right.
 ```
+
+3. Copy the publishing scaffolds from `skill/templates/` into the `diataxis/`
+   directory so the user can run `make build` as soon as content is generated:
+   - `skill/templates/Makefile` → `diataxis/Makefile` (no substitution)
+   - `skill/templates/hugo.toml` → `diataxis/hugo.toml`; replace
+     `{{PROJECT_NAME}}` and `{{PROJECT_DESCRIPTION}}` with the values from
+     `[project]` in the structure document
+   - `skill/templates/go.mod` → `diataxis/go.mod`; replace `{{MODULE_PATH}}`
+     with `diataxis.local/<project-slug>` where the slug is the lowercased
+     project name with non-alphanumeric runs collapsed to hyphens
+
+   These are publishing config — user-owned from the first build onward. Once
+   scaffolded, the skill must not rewrite them. If a file already exists at
+   the target path, skip it.
 
 **Updating structure**: When the user asks to add, remove, or reorganize content,
 update `diataxis.toml` first. Then update the affected files. The structure
@@ -198,30 +212,66 @@ When spawning subagents for generation, provide each one with:
 **Cross-linking**: Every file should link to its sibling quadrant docs. A tutorial
 should link to the relevant explanation and reference. A how-to should link to
 reference. These links use relative paths within the documentation directory.
+Hugo serves pages at pretty URLs (e.g. `/tutorials/first-project/`), so
+relative links between files should use the directory form (`../reference/foo/`),
+not the `.md` or `.html` form.
+
+**Hugo frontmatter**: Every generated markdown file starts with a TOML
+frontmatter block (`+++` delimiters) containing at least `title`, `weight`,
+and `description`, plus `topic`, `covers`, and `detail` as page params
+derived from the matching `diataxis.toml` entry. Do not repeat the title as
+an `# H1` heading in the body — the Hugo theme renders the title from
+frontmatter, and a body H1 produces a duplicate. Compute `weight` as
+`topic.order * 10 + quadrant_weight`, where quadrant_weight is 1 for
+tutorials, 2 for howto, 3 for reference, 4 for explanation. This gives the
+sidebar the standard Tutorials → How-to → Reference → Explanation order
+grouped by topic. Example frontmatter:
+
+```toml
++++
+title = "Your First Project"
+weight = 11
+description = "First steps with the Widget library"
+topic = "getting-started"
+covers = ["Installing the library", "Creating a first widget"]
+detail = "Step-by-step with code examples."
++++
+```
+
+**Homepage frontmatter**: `diataxis/index.md` gets `title`, `description`,
+and a `[cascade]` table setting `type = "docs"` so every child page inherits
+the theme's docs layout (relevant to Hextra and similar themes).
+
+**Exercises linking**: When a `diataxis.toml` entry lists exercises, append
+an `## Exercises` section at the end of the generated markdown with links
+to each exercise's standalone page (`/exercises/<stem>/`). The exercise stem
+is the file name without the `.py` extension. These bundles are produced by
+`make exercises` and served as standalone pages with their own look and feel.
 
 **Math notation**: All mathematical expressions must use LaTeX notation with
-standard delimiters, rendered via MathJax in the final HTML. Use `$...$` or
-`\(...\)` for inline math and `$$...$$` or `\[...\]` for display/block math.
-The build pipeline includes MathJax in the HTML template. Never write math
-as plain text like `3/4 + 1/2` when it can be expressed as `$\frac{3}{4} + \frac{1}{2}$`.
+standard delimiters. Use `$...$` or `\(...\)` for inline math and `$$...$$`
+or `\[...\]` for display/block math. The Hugo theme renders it at build time
+(KaTeX in the default Hextra theme). Never write math as plain text like
+`3/4 + 1/2` when it can be expressed as `$\frac{3}{4} + \frac{1}{2}$`.
 
 **Diagrams**: Use mermaid format for all diagrams (flowcharts, sequence diagrams,
 entity-relationship diagrams, etc.). Write them as fenced code blocks with the
-`mermaid` language tag in the markdown source. The build pipeline pre-renders
-them to SVG via `mmdc` — no client-side JavaScript needed.
+`mermaid` language tag in the markdown source. The Hugo theme renders them
+client-side at view time.
 
 **Exercises**: For tutorials in learning-path projects, create marimo `.py`
-notebooks. These are authored as standard marimo notebooks. The build pipeline
-exports each one to a self-contained WASM HTML bundle (via
-`marimo export html-wasm`) that runs in the browser via Pyodide — no marimo
-server process is required to view the published output. Each exercise file
-should be self-contained and focused on one concept, and must only depend on
-packages available to Pyodide.
+notebooks under `diataxis/exercises/`. These are authored as standard marimo
+notebooks. The Makefile exports each one to a self-contained WASM HTML bundle
+(via `marimo export html-wasm`) at `diataxis/static/exercises/<stem>/` that
+runs in the browser via Pyodide — no marimo server process is required to
+view the published output. Each exercise file should be self-contained and
+focused on one concept, and must only depend on packages available to
+Pyodide.
 
 **Deterministic transforms**: When a task is purely mechanical (converting markdown
 to HTML, formatting tables, validating structure), use the appropriate tool — not
 LLM generation. Specifically:
-- Markdown to HTML: `pandoc`
+- Markdown to HTML: `hugo` (via `make build`)
 - HTML tidying: `tidy` or `htmlq`
 - Validating `diataxis.toml` structure: `nu checks/check-toml-structure.nu <dir>` (do not write ad-hoc Python or `jq` scripts for this — the check is pre-approved and covers required fields, enums, and syntax in one pass)
 - Markdown linting: `textlint`
@@ -320,43 +370,47 @@ hard, add introductory material":
 3. Generate the new content
 4. Re-score the affected sections and the project as a whole
 
-### Step 6: Build and Publish
+### Step 6: Build
 
-The build pipeline transforms the authored content into user-facing HTML.
+The skill does not build the site — [Hugo](https://gohugo.io/) does. The
+`diataxis/` directory is a plain Hugo site: the scaffolded `hugo.toml` mounts
+each quadrant into Hugo's content tree, `diataxis.toml` is exposed as a data
+file, and marimo WASM bundles live under `static/exercises/`. Presentation is
+**theme-driven**, not skill-driven: the default theme is
+[Hextra](https://imfing.github.io/hextra/), and users swap it by editing
+`hugo.toml`.
 
 Read `references/build-pipeline.md` for the technical details.
 
-The `diataxis` CLI requires `uv` to be installed. All commands are run via
-`uv run`:
+Users run the build with `make`, which preprocesses marimo notebooks and
+then invokes `hugo`:
 
 ```bash
-uv run diataxis build            # Build HTML from diataxis/ directory
-uv run diataxis serve            # Build + start a local static server
-uv run diataxis serve-only       # Start the static server without rebuilding
-uv run diataxis publish          # Rebuild and deploy to ~/Sites/<project-slug>/
-uv run diataxis build -d <path>  # Use a different diataxis directory
+cd diataxis
+make build           # export exercises + hugo
+make serve           # export exercises + hugo server (live reload)
+make exercises       # export exercises only
+make clean           # remove public/ and resources/
 ```
 
-The pipeline:
-1. Reads `diataxis.toml` for the project manifest
-2. Converts markdown files to HTML via `pandoc`
-3. Generates navigation/index pages from the structure
-4. Exports marimo exercises to self-contained WASM bundles under
-   `_build/exercises/<stem>/` (via `marimo export html-wasm`)
-5. Inserts iframe references pointing at each exercise bundle
-6. Outputs a directory of HTML files ready to serve
+The Makefile exists because Hugo cannot export marimo notebooks on its own;
+that is the only preprocessing step. Everything else — markdown rendering,
+navigation, styling, math, mermaid, search — is Hugo's job (or the theme's).
 
-The static site is fully self-contained: exercises run in the browser via
-Pyodide, so there is no separate marimo process and no port-coordination
-needed. `serve` starts a single static server (port 8000 by default).
+The authored markdown files already carry Hugo frontmatter (written during
+Step 3), so `hugo` can build the site directly. No staging step, no custom
+CLI. A user who prefers not to use `make` can run `hugo` directly inside
+`diataxis/` after ensuring exercises are exported.
 
-**Publishing**: `diataxis publish` rebuilds the site and copies `_build/` to
-`~/Sites/<project-slug>/`, where `<project-slug>` is derived from `project.name`
-in `diataxis.toml`. It also regenerates `~/Sites/index.html` as a top-level
-catalog of every published project by scanning each `~/Sites/*/.diataxis-meta.json`
-manifest. Use `--sites-dir <path>` to target a directory other than `~/Sites`.
-Because publish always rebuilds first, the deployed output is guaranteed to
-match the current sources.
+Marimo notebooks are **standalone pages** at `/exercises/<stem>/`. They bypass
+Hugo's theme entirely and keep their own look and feel. Parent tutorials/howtos
+link to them via the `## Exercises` section appended during content generation.
+
+Content uses **generic semantic HTML5** only — no skill-specific CSS classes.
+Any Hugo theme renders the content correctly.
+
+**Deploying**: the deployable site is `diataxis/public/`. Deploy it using any
+Hugo workflow (`hugo deploy`, Netlify, GitHub Pages, rsync, etc.).
 
 ## Directory Layout
 
@@ -367,34 +421,32 @@ project-root/
 ├── README.md
 ├── src/                           # Project source code, etc.
 └── diataxis/                      # All Diataxis content lives here
-    ├── diataxis.toml              # Source of truth
-    ├── index.md                   # Introductory page (why + what + signposts)
+    ├── diataxis.toml              # Source of truth (editorial)
+    ├── hugo.toml                  # Hugo config (user-owned after scaffold)
+    ├── go.mod                     # Hugo module manifest (user-owned)
+    ├── Makefile                   # `make build`, `make serve` (user-owned)
+    ├── README.md                  # Guard file ("this is generated output")
+    ├── index.md                   # Homepage (signpost)
     ├── scores.toml                # Scoring history
     ├── tutorials/
-    │   ├── index.md               # Landing page (overview, not bare list)
-    │   └── basic-operations.md
+    │   └── basic-operations.md    # authored markdown with Hugo frontmatter
     ├── howto/
-    │   ├── index.md
     │   └── add-fractions.md
     ├── reference/
-    │   ├── index.md
     │   └── fraction-operations.md
     ├── explanation/
-    │   ├── index.md
     │   └── why-fractions-work.md
     ├── exercises/
     │   └── basic-ops.py           # marimo notebook
-    └── _build/                    # Generated HTML output
-        ├── index.html
-        ├── tutorials/
-        ├── howto/
-        ├── reference/
-        ├── explanation/
-        └── assets/
+    ├── static/exercises/          # WASM bundles (generated by `make exercises`)
+    └── public/                    # Hugo output — the rendered site
 ```
 
-The `diataxis/` directory is self-contained and separate from any other project
-files. All paths in `diataxis.toml` are relative to the `diataxis/` directory.
+The `diataxis/` directory is a plain Hugo site plus `diataxis.toml` as the
+editorial source of truth. All paths in `diataxis.toml` are relative to the
+`diataxis/` directory. `hugo.toml`, `go.mod`, `Makefile`, and `layouts/` (if
+added) are user-owned. Everything else under `diataxis/` is skill-generated
+or Hugo-generated output.
 
 ## Reference Files
 

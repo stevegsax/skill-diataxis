@@ -1,5 +1,11 @@
-# Quadrant Rules
-
++++
+title = "Quadrant Rules"
+weight = 33
+description = "Understanding and applying the Diataxis quadrant rules"
+topic = "quadrants"
+covers = ["Tutorial rules (action-oriented, show results, minimize explanation)", "How-to rules (task-focused, assume competence, no teaching)", "Reference rules (describe only, mirror structure, use tables)", "Explanation rules (answer why, make connections, provide context)", "Cross-referencing rules (link, don't embed)"]
+detail = "Tabular per quadrant: must-do, must-not-do, language patterns. Include the compass diagnostic questions."
++++
 ## Tutorials
 
 | | |
