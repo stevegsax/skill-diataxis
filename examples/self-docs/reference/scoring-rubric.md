@@ -1,6 +1,6 @@
 +++
 title = "Scoring Rubric"
-weight = 53
+weight = 54
 description = "How to evaluate documentation quality using the scoring rubric"
 topic = "scoring"
 covers = ["The 1-5 score scale with definitions", "Project-level criteria (decomposition, balance, audience, completeness)", "Structural criteria (coverage, detail compliance, guidance adherence, cross-linking)", "Quadrant-level criteria per type", "The scores.toml output format"]
@@ -99,4 +99,4 @@ quadrant_purity = { score = 4, justification = "..." }
 ```
 
 For how to run scoring and interpret results, see
-[How to Score and Revise](../howto/score-and-revise.html).
+[How to Score and Revise](../howto/score-and-revise/).

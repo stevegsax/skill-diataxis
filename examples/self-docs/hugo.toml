@@ -49,7 +49,8 @@ enableRobotsTXT = true
     target = "content/_index.md"
 
   # Mount diataxis.toml as a Hugo data file so themes can read editorial
-  # metadata as `.Site.Data.diataxis`.
+  # metadata as `hugo.Data.diataxis` (previously `.Site.Data.diataxis`,
+  # deprecated in Hugo 0.156+).
   [[module.mounts]]
     source = "diataxis.toml"
     target = "data/diataxis.toml"

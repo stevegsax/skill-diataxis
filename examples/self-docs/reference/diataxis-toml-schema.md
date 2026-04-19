@@ -1,6 +1,6 @@
 +++
 title = "diataxis.toml Schema"
-weight = 23
+weight = 34
 description = "How diataxis.toml works and how to maintain it"
 topic = "structure-document"
 covers = ["All project-level fields (name, description, type, audience, prerequisites)", "Topic fields (title, description, complexity, prerequisites, order)", "Quadrant fields (file, status, covers, detail, guidance, exercises)", "Status values (planned, draft, review, complete)"]
@@ -80,6 +80,6 @@ exercises = ["exercises/auth-exercise.py"]
 ```
 
 For a walkthrough of building this file, see the
-[Writing diataxis.toml](../tutorials/writing-diataxis-toml.html) tutorial. For
+[Writing diataxis.toml](../tutorials/writing-diataxis-toml/) tutorial. For
 why the structure document matters, see
-[Why Structure First](../explanation/why-structure-first.html).
+[Why Structure First](../explanation/why-structure-first/).

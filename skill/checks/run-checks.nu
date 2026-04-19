@@ -8,6 +8,7 @@ const CHECKS = [
     # Structural checks
     check-toml-structure
     check-quadrant-files
+    check-quadrant-order
     check-orphan-files
     check-status-consistency
     check-exercise-exists

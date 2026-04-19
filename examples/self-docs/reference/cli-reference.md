@@ -1,6 +1,6 @@
 +++
 title = "Build Commands Reference"
-weight = 43
+weight = 44
 description = "The build pipeline, CLI commands, and local development workflow"
 topic = "build-pipeline"
 covers = ["make build — what it does", "make serve — what it does", "make exercises — what it does", "make clean — what it does", "Running `hugo` directly without make", "WASM exercise export behavior and caching (via make's dependency graph)", "How the default Hextra theme is wired in and how to swap it"]

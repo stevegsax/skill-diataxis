@@ -1,6 +1,6 @@
 +++
 title = "How to Install and Set Up"
-weight = 12
+weight = 13
 description = "Installation, first project, and the basic workflow"
 topic = "getting-started"
 covers = ["Installing uv", "Installing Hugo extended", "Installing Go (required for Hugo module resolution)", "Installing make", "Running the marimo Python dependency via uv"]
@@ -110,5 +110,7 @@ uv sync
 It is exposed as `uv run marimo` — the Makefile invokes it that way, so no
 additional PATH setup is required.
 
-For background on why these tools are needed, see
-[Why Structure First](../explanation/why-structure-first/).
+Once everything is installed, see
+[How to Build and Serve Documentation](../../howto/build-and-serve/) for
+the build commands, or [Your First Diataxis Project](../../tutorials/first-project/)
+for an end-to-end walkthrough.

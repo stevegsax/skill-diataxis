@@ -1,6 +1,6 @@
 +++
 title = "Writing diataxis.toml"
-weight = 21
+weight = 32
 description = "How diataxis.toml works and how to maintain it"
 topic = "structure-document"
 covers = ["Creating the [project] section", "Defining topics with slugs, titles, and ordering", "Adding quadrant entries with covers, detail, and guidance", "Linking exercises to tutorials"]
@@ -205,6 +205,6 @@ You have built a `diataxis.toml` that defines:
 - Scoring contracts via `covers` and content guidance via `guidance`
 
 For the full list of fields and their valid values, see the
-[diataxis.toml Schema](../reference/diataxis-toml-schema.html). To understand
+[diataxis.toml Schema](../reference/diataxis-toml-schema/). To understand
 why the structure document comes before content, see
-[Why Structure First](../explanation/why-structure-first.html).
+[Why Structure First](../explanation/why-structure-first/).

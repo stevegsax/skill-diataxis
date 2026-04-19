@@ -11,11 +11,15 @@ export def load-structure [diataxis_dir: string]: nothing -> record {
     open ($diataxis_dir | path join "diataxis.toml")
 }
 
-# List content markdown files in a directory, excluding index.md.
+# List content markdown files in a directory, excluding Hugo section-landing
+# files (`index.md` from the legacy pipeline and `_index.md` for Hugo).
 export def content-files [dir: string]: nothing -> list<string> {
     if not ($dir | path exists) { return [] }
     glob ($dir | path join "*.md")
-    | where {|f| ($f | path basename) != "index.md"}
+    | where {|f|
+        let name = ($f | path basename)
+        $name != "index.md" and $name != "_index.md"
+    }
 }
 
 # Build a check result record.

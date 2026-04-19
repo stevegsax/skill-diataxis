@@ -1,6 +1,6 @@
 +++
 title = "Quadrant Rules"
-weight = 33
+weight = 24
 description = "Understanding and applying the Diataxis quadrant rules"
 topic = "quadrants"
 covers = ["Tutorial rules (action-oriented, show results, minimize explanation)", "How-to rules (task-focused, assume competence, no teaching)", "Reference rules (describe only, mirror structure, use tables)", "Explanation rules (answer why, make connections, provide context)", "Cross-referencing rules (link, don't embed)"]
@@ -117,4 +117,4 @@ Two questions classify any content:
 2. Does this serve **acquisition** or **application**?
 
 For background on why these quadrants exist, see
-[The Diataxis Framework](../explanation/diataxis-framework.html).
+[The Diataxis Framework](../explanation/diataxis-framework/).

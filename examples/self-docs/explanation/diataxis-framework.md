@@ -1,6 +1,6 @@
 +++
 title = "The Diataxis Framework"
-weight = 34
+weight = 21
 description = "Understanding and applying the Diataxis quadrant rules"
 topic = "quadrants"
 covers = ["The two axes (action/cognition, acquisition/application)", "Why four quadrants and not three or five", "The most common mistake (confusing tutorials with how-to guides)", "How quadrant boundaries improve documentation quality"]
@@ -77,6 +77,6 @@ Reference material is findable. Explanations provide depth without interrupting
 the flow of practical work.
 
 For the specific rules governing each quadrant, see the
-[Quadrant Rules](../reference/quadrant-rules.html) reference. To see the
+[Quadrant Rules](../reference/quadrant-rules/) reference. To see the
 framework applied in practice, try the
-[Your First Project](../tutorials/first-project.html) tutorial.
+[Your First Project](../tutorials/first-project/) tutorial.

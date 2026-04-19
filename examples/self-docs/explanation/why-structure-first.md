@@ -1,6 +1,6 @@
 +++
 title = "Why Structure First"
-weight = 24
+weight = 31
 description = "How diataxis.toml works and how to maintain it"
 topic = "structure-document"
 covers = ["Why the structure document exists", "Why structure changes before content", "How guidance fields prevent regressions", "The relationship between covers and scoring", "Why diataxis/ is output-only and separate from other docs"]
@@ -103,6 +103,6 @@ document (for cross-linking context) but only needs to write its assigned
 file. This scales well for large documentation projects.
 
 For the specific fields and their formats, see the
-[diataxis.toml Schema](../reference/diataxis-toml-schema.html). To see the
+[diataxis.toml Schema](../reference/diataxis-toml-schema/). To see the
 structure document in action, try the
-[Writing diataxis.toml](../tutorials/writing-diataxis-toml.html) tutorial.
+[Writing diataxis.toml](../tutorials/writing-diataxis-toml/) tutorial.

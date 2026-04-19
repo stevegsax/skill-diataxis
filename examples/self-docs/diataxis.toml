@@ -22,12 +22,13 @@ file = "tutorials/first-project.md"
 status = "draft"
 covers = [
     "Installing prerequisites (uv, Hugo extended, Go)",
-    "Creating a diataxis/ directory and diataxis.toml",
-    "Adding a first topic with a tutorial file",
-    "Building the site with `make build` and viewing it",
+    "Asking the diataxis skill to scaffold a new project",
+    "Reviewing the structure document the skill produces",
+    "Building and viewing the rendered Hugo site",
+    "Asking the skill for revisions",
 ]
-detail = "Step-by-step from an empty directory to a rendered page in the browser. Use a concrete example topic throughout."
-guidance = "Start with the install commands (uv, Hugo extended, Go for Hugo module resolution), then walk through creating diataxis.toml by hand. Keep the example topic simple — 'Getting Started with Widgets' or similar. Explain that the `diataxis/` directory is a plain Hugo site — `hugo.toml`, `go.mod`, and a `Makefile` are scaffolded alongside `diataxis.toml` and are user-owned thereafter. Run `make build` once the structure document and a tutorial file are complete, and show the make output so the learner sees the exercise export and Hugo summary. The final HTML lives at `diataxis/public/`. Note that the generated `diataxis/` directory is output-only and includes a README.md stating this."
+detail = "Step-by-step from an empty directory to a rendered page in the browser. Use a concrete example project throughout."
+guidance = "The reader's job is to direct the skill, not to type files. Do not show manual `cp` of templates and do not show hand-written frontmatter — the skill scaffolds `Makefile`, `hugo.toml`, `go.mod`, and writes all markdown with frontmatter. Show a concrete prompt the reader gives Claude (e.g., 'Use the diataxis skill to start a project documenting the Widget Python library...'), then describe what the skill does in response and what the resulting tree looks like. After scaffolding, the reader runs `make build` and `make serve` themselves. End with a revision example: the reader asks Claude to change something, the skill updates `diataxis.toml`'s guidance and regenerates the file. Reinforce that hand-edits to markdown will be overwritten and that `diataxis.toml` is the surface to edit (or to ask the skill to edit). The publishing files (Makefile, hugo.toml, go.mod, layouts/) are user-owned — the skill never rewrites them after scaffold."
 exercises = ["exercises/build-your-first-project.py"]
 
 [topics.getting-started.howto]
@@ -47,7 +48,7 @@ guidance = "Title: 'How to Install and Set Up'. Assume the reader knows what uv 
 title = "The Structure Document"
 description = "How diataxis.toml works and how to maintain it"
 complexity = "beginner"
-order = 2
+order = 3
 
 [topics.structure-document.tutorials]
 file = "tutorials/writing-diataxis-toml.md"
@@ -90,7 +91,7 @@ guidance = "The key insight: diataxis.toml is both the generation brief and the 
 title = "The Four Quadrants"
 description = "Understanding and applying the Diataxis quadrant rules"
 complexity = "intermediate"
-order = 3
+order = 2
 
 [topics.quadrants.reference]
 file = "reference/quadrant-rules.md"
@@ -119,7 +120,7 @@ guidance = "This is the 'why Diataxis works' document. Use concrete examples of 
 
 [topics.build-pipeline]
 title = "Building and Serving"
-description = "The build pipeline, CLI commands, and local development workflow"
+description = "The build pipeline, Make targets, and local development workflow"
 complexity = "beginner"
 order = 4
 
@@ -162,13 +163,14 @@ order = 5
 file = "howto/score-and-revise.md"
 status = "draft"
 covers = [
-    "Running a scoring pass",
+    "Running the deterministic check suite (Phase 1)",
+    "Asking Claude for the qualitative scoring pass (Phase 2)",
     "Reading scores.toml output",
     "Identifying cross-contamination",
     "Revising based on scores",
 ]
 detail = "Task-focused. Each task gets a short procedure."
-guidance = "Title: 'How to Score and Revise Documentation'. Show a sample scores.toml entry and explain how to read the comparison table. Link to the scoring reference for the full rubric."
+guidance = "Title: 'How to Score and Revise Documentation'. Cover both phases of the scoring workflow: Phase 1 is the deterministic nu check suite (`nu skill/checks/run-checks.nu <diataxis_dir>`), Phase 2 is the qualitative LLM scoring against the diataxis.toml rubric. The deterministic phase must run first; if any checks fail, the user fixes them or explicitly asks Claude to score anyway. Show a sample scores.toml entry and explain how to read the comparison table. Link to the scoring reference for the full rubric."
 
 [topics.scoring.reference]
 file = "reference/scoring-rubric.md"

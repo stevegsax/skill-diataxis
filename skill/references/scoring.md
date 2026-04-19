@@ -98,6 +98,20 @@ Evaluates each file against its entry in `diataxis.toml`.
 Evaluates whether each file follows the rules for its quadrant type. These rules
 come from the Diataxis framework itself (see `references/quadrants.md`).
 
+Score each file against the rubric for its quadrant. The four rubrics are
+listed below in presentation order: **Explanation → Tutorials → How-to →
+Reference**.
+
+### Explanation scoring
+
+| Criterion | What to check |
+|-----------|---------------|
+| Answers "why" | Does it address reasons, context, and motivation? |
+| Makes connections | Does it relate concepts to each other or to broader context? |
+| No instructions | Does it avoid step-by-step procedures? |
+| Provides context | Does it give background, history, or design rationale? |
+| Topic-scoped | Is it bounded to a clear topic? |
+
 ### Tutorial scoring
 
 | Criterion | What to check |
@@ -129,16 +143,6 @@ come from the Diataxis framework itself (see `references/quadrants.md`).
 | Mirrors subject | Does the doc structure reflect the structure of what it describes? |
 | Complete within scope | Are all items in the declared scope documented? |
 | Brief examples | Are examples short and illustrative, not tutorial-like? |
-
-### Explanation scoring
-
-| Criterion | What to check |
-|-----------|---------------|
-| Answers "why" | Does it address reasons, context, and motivation? |
-| Makes connections | Does it relate concepts to each other or to broader context? |
-| No instructions | Does it avoid step-by-step procedures? |
-| Provides context | Does it give background, history, or design rationale? |
-| Topic-scoped | Is it bounded to a clear topic? |
 
 ### Cross-contamination detection
 

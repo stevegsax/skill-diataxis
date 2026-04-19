@@ -27,6 +27,13 @@ Each quadrant serves a different user need and has strict rules about what belon
 in it. The power of Diataxis comes from keeping these quadrants distinct — content
 that bleeds across boundaries degrades the documentation.
 
+**Presentation order**: the published site presents the four quadrants as
+**Explanation → Tutorials → How-to Guides → Reference**. Explanation comes
+first so readers encounter the conceptual framing before the mechanics.
+Tutorials and How-to guides follow for readers ready to act, with Reference
+last as the lookup surface. This ordering is enforced by the reviewer
+(`nu checks/run-checks.nu`) via `_index.md` section weights.
+
 Read `references/quadrants.md` for the detailed rules governing each quadrant type.
 These rules are the basis for both content generation and scoring.
 
@@ -204,10 +211,10 @@ When spawning subagents for generation, provide each one with:
 3. The quadrant rules from `references/quadrants.md`
 
 **Quadrant rules are non-negotiable during generation**:
+- Explanation: discuss why, make connections, provide context
 - Tutorials: guide action, show results at every step, minimize explanation
 - How-to guides: task-focused, no teaching, assume competence
 - Reference: describe only, mirror product structure, use tables
-- Explanation: discuss why, make connections, provide context
 
 **Cross-linking**: Every file should link to its sibling quadrant docs. A tutorial
 should link to the relevant explanation and reference. A how-to should link to
@@ -223,14 +230,15 @@ derived from the matching `diataxis.toml` entry. Do not repeat the title as
 an `# H1` heading in the body — the Hugo theme renders the title from
 frontmatter, and a body H1 produces a duplicate. Compute `weight` as
 `topic.order * 10 + quadrant_weight`, where quadrant_weight is 1 for
-tutorials, 2 for howto, 3 for reference, 4 for explanation. This gives the
-sidebar the standard Tutorials → How-to → Reference → Explanation order
-grouped by topic. Example frontmatter:
+explanation, 2 for tutorials, 3 for howto, 4 for reference. This matches
+the presentation order (Explanation → Tutorials → How-to → Reference)
+and groups content by topic within each section. Example frontmatter for
+the first tutorial in the first topic:
 
 ```toml
 +++
 title = "Your First Project"
-weight = 11
+weight = 12
 description = "First steps with the Widget library"
 topic = "getting-started"
 covers = ["Installing the library", "Creating a first widget"]
@@ -241,6 +249,47 @@ detail = "Step-by-step with code examples."
 **Homepage frontmatter**: `diataxis/index.md` gets `title`, `description`,
 and a `[cascade]` table setting `type = "docs"` so every child page inherits
 the theme's docs layout (relevant to Hextra and similar themes).
+
+**Quadrant landing pages**: Each of the four quadrant directories gets an
+`_index.md` that acts as the section landing page. These pages enforce the
+presentation order and give readers an orientation before they drill into a
+specific file. Create one per quadrant with this exact shape:
+
+- Frontmatter with `title`, `description`, and a fixed `weight` that pins the
+  section order: **explanation = 10, tutorials = 20, howto = 30,
+  reference = 40**. These weights match the presentation order the skill
+  requires; the reviewer fails if any are missing or out of order.
+- A short introductory paragraph (2-4 sentences) explaining what this
+  quadrant is and when a reader should consult it. Write this for a reader
+  who has landed on the section page and is deciding whether to stay.
+- A bulleted list of links to every content file in that quadrant, each with
+  a one-line description of what the page covers. Use the Hugo pretty-URL
+  directory form (`filename/`), not `filename.md`. Order the list by the
+  content file's `weight` so the landing page mirrors the in-section
+  ordering.
+
+Example for the explanation quadrant:
+
+```markdown
++++
+title = "Explanation"
+weight = 10
+description = "Background, context, and deeper understanding."
++++
+Explanation documents discuss the why — the reasoning, design rationale,
+and trade-offs behind the project. Read these to deepen understanding,
+not to accomplish a task.
+
+- [The Diataxis Framework](diataxis-framework/) — what Diataxis is, the
+  two axes that produce the four quadrants, and why the boundaries
+  improve documentation quality.
+- [Why Structure First](why-structure-first/) — why `diataxis.toml` is
+  updated before any content change, and how the `guidance` field
+  prevents revision regressions.
+```
+
+When a content file is added, removed, or renamed, update the corresponding
+quadrant `_index.md` in the same change so the link list does not drift.
 
 **Exercises linking**: When a `diataxis.toml` entry lists exercises, append
 an `## Exercises` section at the end of the generated markdown with links

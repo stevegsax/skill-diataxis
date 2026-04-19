@@ -137,7 +137,14 @@ knowledge. OK to discuss history, alternatives, tradeoffs."""
    `detail = "Tabular, one-line descriptions"` will be scored differently from
    one with `detail = "Detailed paragraphs with examples"`.
 
-7. **Landing pages**: Each quadrant directory gets an `index.md` that serves as
-   a landing page. Landing pages are not listed per-topic — they are generated
-   from the structure document during the build step. They contain an overview
-   and organized links to the content within that section.
+7. **Landing pages**: Each quadrant directory gets an authored `_index.md`
+   that serves as the section landing page. Landing pages are not listed
+   per-topic in `diataxis.toml` — they are authored once and updated
+   whenever content files are added, removed, or renamed. Each landing
+   page contains a short introduction explaining the quadrant and a
+   bulleted list of links to every content file in that quadrant.
+
+   The four landing pages use fixed weights that pin the published order:
+   **explanation = 10, tutorials = 20, howto = 30, reference = 40**. This
+   ordering is checked by the reviewer; deviations fail the check suite.
+   See the `_index.md` guidance in `SKILL.md` for the expected shape.

@@ -1,6 +1,6 @@
 +++
 title = "How to Build and Serve Documentation"
-weight = 42
+weight = 43
 description = "The build pipeline, CLI commands, and local development workflow"
 topic = "build-pipeline"
 covers = ["Building the site with `make build`", "Running live reload with `make serve`", "Exporting marimo notebooks with `make exercises`", "Cleaning generated output with `make clean`", "Switching the Hugo theme by editing hugo.toml", "Where the rendered output lives and how to deploy it"]
@@ -58,10 +58,11 @@ Removes `public/` (Hugo output) and `resources/` (Hugo cache). Leaves
 
 The scaffolded `hugo.toml` wires in the Hextra theme via a Hugo module. To
 use a different theme, edit `hugo.toml` and replace the `module.imports`
-entry with any Hugo module theme from https://themes.gohugo.io/. Then
-refresh the modules and rebuild:
+entry with any Hugo module theme from https://themes.gohugo.io/. Then,
+from inside `diataxis/`, refresh the modules and rebuild:
 
 ```bash
+cd diataxis
 hugo mod get -u
 make build
 ```

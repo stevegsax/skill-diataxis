@@ -4,14 +4,59 @@ These rules govern what belongs in each documentation type. They are used both
 for generating content and for scoring adherence. Violations of these rules
 are scoring penalties.
 
+The four quadrants are presented in this order throughout the skill and the
+rendered site: **Explanation → Tutorials → How-to Guides → Reference**.
+Explanation frames the subject before readers act on it; Tutorials and How-to
+Guides follow for readers ready to work; Reference is the lookup surface,
+last because it presupposes the reader already knows what to look up.
+
 ## Table of Contents
 
+- [Explanation](#explanation)
 - [Tutorials](#tutorials)
 - [How-to Guides](#how-to-guides)
 - [Reference](#reference)
-- [Explanation](#explanation)
 - [Cross-referencing](#cross-referencing)
 - [The Compass](#the-compass)
+
+---
+
+## Explanation
+
+**Purpose**: Discursive treatment that deepens and broadens understanding.
+
+**Serves**: Acquisition of skill through cognition.
+
+**Analogy**: An article on culinary social history.
+
+### What explanation must do
+
+- Answer "why?" and "can you tell me about...?"
+- Make connections — to other concepts, to history, to alternatives
+- Provide context: background, design decisions, constraints, tradeoffs
+- Discuss the subject from a higher perspective
+- Acknowledge that multiple perspectives or approaches exist
+
+### What explanation must not do
+
+- Provide instructions or steps (link to Tutorial or How-to)
+- Include technical descriptions that belong in Reference
+- Become a dumping ground for content that doesn't fit elsewhere
+
+### Language patterns
+
+- "The reason for X is because historically, Y..."
+- "W is better than Z in this context because..."
+- "An X in this system is analogous to a Y in..."
+- "Some practitioners prefer W because Z. This can work, but..."
+
+### Structural rules
+
+- Each document has a clear topic (you could prefix the title with "About")
+- Discursive prose, not lists or tables (those belong in Reference)
+- Can contain opinions, clearly marked as such
+- Links to Reference for factual details, to How-to for practical application
+- Passes the "bath test": worth reading away from the keyboard
 
 ---
 
@@ -147,45 +192,6 @@ result.
 
 ---
 
-## Explanation
-
-**Purpose**: Discursive treatment that deepens and broadens understanding.
-
-**Serves**: Acquisition of skill through cognition.
-
-**Analogy**: An article on culinary social history.
-
-### What explanation must do
-
-- Answer "why?" and "can you tell me about...?"
-- Make connections — to other concepts, to history, to alternatives
-- Provide context: background, design decisions, constraints, tradeoffs
-- Discuss the subject from a higher perspective
-- Acknowledge that multiple perspectives or approaches exist
-
-### What explanation must not do
-
-- Provide instructions or steps (link to Tutorial or How-to)
-- Include technical descriptions that belong in Reference
-- Become a dumping ground for content that doesn't fit elsewhere
-
-### Language patterns
-
-- "The reason for X is because historically, Y..."
-- "W is better than Z in this context because..."
-- "An X in this system is analogous to a Y in..."
-- "Some practitioners prefer W because Z. This can work, but..."
-
-### Structural rules
-
-- Each document has a clear topic (you could prefix the title with "About")
-- Discursive prose, not lists or tables (those belong in Reference)
-- Can contain opinions, clearly marked as such
-- Links to Reference for factual details, to How-to for practical application
-- Passes the "bath test": worth reading away from the keyboard
-
----
-
 ## Cross-referencing
 
 Each document should link to its siblings in other quadrants. The rule is:
@@ -193,13 +199,13 @@ Each document should link to its siblings in other quadrants. The rule is:
 
 | From | Link to | Why |
 |------|---------|-----|
+| Explanation | Tutorial | "To try this yourself, see the tutorial..." |
+| Explanation | Reference | "For technical details, see..." |
 | Tutorial | Explanation | "For more on why this works, see..." |
 | Tutorial | Reference | "For the full list of options, see..." |
 | How-to | Reference | "See the X reference for all parameters." |
 | How-to | Explanation | "For background on this approach, see..." |
 | Reference | How-to | "For a guide on using X, see..." |
-| Explanation | Tutorial | "To try this yourself, see the tutorial..." |
-| Explanation | Reference | "For technical details, see..." |
 
 A document that embeds content from another quadrant is violating boundaries.
 For example, a tutorial that contains a long explanation of why something works
