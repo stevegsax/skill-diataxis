@@ -6,6 +6,7 @@ description: >
 allowed-tools:
   - Bash(nu checks/run-checks.nu *)
   - Bash(nu checks/check-toml-structure.nu *)
+  - Bash(python skill/scripts/upgrade_to_hugo.py *)
 ---
 
 # Diataxis Documentation Skill
@@ -93,6 +94,67 @@ published Hugo site builds against this directory. Do not create documentation
 files in `docs/`, `documentation/`, or any other directory.
 
 Read `references/structure-schema.md` for the full TOML schema.
+
+**Detect the project state first.** Before touching anything, figure out which
+of three states the target `diataxis/` directory is in — the path branches
+from here:
+
+1. **Absent or empty** — no `diataxis/` directory, or one that contains no
+   `diataxis.toml`. This is a new project. Skip ahead to "Scaffolding a new
+   project" below.
+2. **Pre-Hugo format** — a `diataxis/` directory authored under an earlier
+   version of this skill. You will see one or more of: no `hugo.toml`
+   alongside `diataxis.toml`; no `Makefile` or `go.mod`; quadrant markdown
+   files that start with an ATX H1 (`# Title`) instead of a `+++`-delimited
+   frontmatter block; no `_index.md` inside any quadrant directory;
+   internal links targeting `.html` files. **Upgrade it before doing any
+   other work** — see the next subsection.
+3. **Current Hugo format** — `hugo.toml` is present, quadrant files begin
+   with `+++` frontmatter, and each quadrant directory has an `_index.md`.
+   Proceed with the normal add/update flow below.
+
+Confirm the state by running the detection pass — it is fast and
+deterministic:
+
+```bash
+python skill/scripts/upgrade_to_hugo.py <diataxis_dir> --check
+```
+
+Exit status `1` means a pre-Hugo project was detected; `0` means the
+directory is already Hugo-format (or brand new).
+
+**Upgrading a pre-Hugo project**: when detection reports a pre-Hugo
+project, run the upgrade script before generating, scoring, or revising
+any content:
+
+```bash
+python skill/scripts/upgrade_to_hugo.py <diataxis_dir>
+```
+
+The script is idempotent and only touches files that need migrating. It
+scaffolds `hugo.toml`/`Makefile`/`go.mod` if missing, prepends TOML
+frontmatter to every quadrant markdown file (title from the file's body
+H1, weight from `topic.order * 10 + quadrant_weight`, `topic`/`covers`/
+`detail` from the matching `diataxis.toml` entry), drops the body H1,
+rewrites `.html` links to Hugo pretty-URL directory form, adds a
+`[cascade]` table to `index.md`, and creates the four `_index.md`
+quadrant landing pages with canonical section weights. Read
+`references/hugo-migration.md` for the full catalog of what the upgrade
+does and does not do.
+
+After the script finishes, do two things before you continue:
+
+1. Read the retired-tool report it printed. `guidance` fields that
+   mention `pandoc`, `mmdc`, `uv run diataxis build`, or
+   `diataxis/_build/` need to be reworked through the skill's revision
+   workflow (Step 5): integrate the new direction into the existing
+   guidance text, then regenerate the affected file. Do not rewrite
+   those guidance fields silently — the author's intent is encoded
+   there, and the skill's feedback-integration rule still applies.
+2. Run `nu checks/run-checks.nu <diataxis_dir>`. Every structural check
+   should pass. If any fail, fix the underlying file and re-run — do
+   not re-run the upgrade script expecting different output; it is
+   idempotent and will not revisit files it already upgraded.
 
 The structure document defines:
 - Project metadata (name, audience, type)
@@ -505,5 +567,7 @@ These files contain detailed specifications. Read them when you need the details
 - `references/structure-schema.md` — Full `diataxis.toml` schema with all fields
 - `references/scoring.md` — Scoring rubric, output format, and comparison logic
 - `references/build-pipeline.md` — Build and serve pipeline technical details
+- `references/hugo-migration.md` — Detecting pre-Hugo projects and what the upgrade script does
+- `scripts/upgrade_to_hugo.py` — Detect (`--check`) and migrate pre-Hugo projects to the current Hugo format
 - `checks/run-checks.nu` — Deterministic check runner (invoke with `nu checks/run-checks.nu <dir>`)
 - `checks/check-schema.json` — JSON Schema for individual check output

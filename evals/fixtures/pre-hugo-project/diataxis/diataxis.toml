@@ -1,0 +1,181 @@
+[project]
+name = "Diataxis Documentation Skill"
+description = "How to use the skill-diataxis project to create, revise, score, and publish Diataxis-structured documentation"
+purpose = """Documentation that lives outside a structured workflow drifts: \
+tutorials rot, reference docs contradict the code, and revision feedback gets \
+lost between regeneration cycles. The Diataxis Documentation Skill gives Claude \
+Code a repeatable six-step process — scope, structure, generate, score, revise, \
+build — so that documentation stays accurate and internally consistent without \
+constant manual oversight."""
+type = "project-docs"
+audience = "Developers and technical writers using Claude Code"
+prerequisites = "Familiarity with Claude Code, uv, and markdown"
+
+[topics.getting-started]
+title = "Getting Started"
+description = "Installation, first project, and the basic workflow"
+complexity = "beginner"
+order = 1
+
+[topics.getting-started.tutorials]
+file = "tutorials/first-project.md"
+status = "draft"
+covers = [
+    "Installing prerequisites (uv, pandoc, mmdc)",
+    "Creating a diataxis/ directory and diataxis.toml",
+    "Adding a first topic with a tutorial file",
+    "Building and viewing the HTML output",
+]
+detail = "Step-by-step from an empty directory to a rendered page in the browser. Use a concrete example topic throughout."
+guidance = "Start with the install commands (uv, pandoc, mmdc for mermaid), then walk through creating diataxis.toml by hand. Keep the example topic simple — 'Getting Started with Widgets' or similar. Show the build output after each step so the learner always sees results. Note that the generated diataxis/ directory is output-only and includes a README.md stating this."
+exercises = ["exercises/build-your-first-project.py"]
+
+[topics.getting-started.howto]
+file = "howto/install-and-setup.md"
+status = "draft"
+covers = [
+    "Installing uv",
+    "Installing pandoc",
+    "Installing mmdc (mermaid CLI)",
+    "Verifying the diataxis CLI works",
+]
+detail = "Concise install steps for macOS and Linux. No explanation of what the tools do."
+guidance = "Title: 'How to Install and Set Up'. Assume the reader knows what uv and pandoc are. Include mmdc for mermaid diagram rendering. Link to the explanation doc for background."
+
+[topics.structure-document]
+title = "The Structure Document"
+description = "How diataxis.toml works and how to maintain it"
+complexity = "beginner"
+order = 2
+
+[topics.structure-document.tutorials]
+file = "tutorials/writing-diataxis-toml.md"
+status = "draft"
+covers = [
+    "Creating the [project] section",
+    "Defining topics with slugs, titles, and ordering",
+    "Adding quadrant entries with covers, detail, and guidance",
+    "Linking exercises to tutorials",
+]
+detail = "Walk through building a real diataxis.toml from scratch. Show the TOML after each addition."
+guidance = "Use a concrete example — documenting a recipe app. Show the file growing incrementally. Point out that covers is the scoring contract."
+
+[topics.structure-document.reference]
+file = "reference/diataxis-toml-schema.md"
+status = "draft"
+covers = [
+    "All project-level fields (name, description, type, audience, prerequisites)",
+    "Topic fields (title, description, complexity, prerequisites, order)",
+    "Quadrant fields (file, status, covers, detail, guidance, exercises)",
+    "Status values (planned, draft, review, complete)",
+]
+detail = "Tabular, one field per row, with type and description. No narrative."
+guidance = "Mirror the structure of the TOML itself. Use tables for every section. Include the valid values for enum fields like status and complexity."
+
+[topics.structure-document.explanation]
+file = "explanation/why-structure-first.md"
+status = "draft"
+covers = [
+    "Why the structure document exists",
+    "Why structure changes before content",
+    "How guidance fields prevent regressions",
+    "The relationship between covers and scoring",
+    "Why diataxis/ is output-only and separate from other docs",
+]
+detail = "Discuss the design rationale. Connect to the user's experience of documentation that drifts or regresses. Use a mermaid diagram to illustrate the revision cycle."
+guidance = "The key insight: diataxis.toml is both the generation brief and the scoring rubric. Explain why capturing revision feedback in guidance matters — without it, regeneration can undo user-requested changes. Explain that diataxis documentation is a human-facing artifact, never authoritative for development — this is why it lives in its own directory and is never an input to other processes."
+
+[topics.quadrants]
+title = "The Four Quadrants"
+description = "Understanding and applying the Diataxis quadrant rules"
+complexity = "intermediate"
+order = 3
+
+[topics.quadrants.reference]
+file = "reference/quadrant-rules.md"
+status = "draft"
+covers = [
+    "Tutorial rules (action-oriented, show results, minimize explanation)",
+    "How-to rules (task-focused, assume competence, no teaching)",
+    "Reference rules (describe only, mirror structure, use tables)",
+    "Explanation rules (answer why, make connections, provide context)",
+    "Cross-referencing rules (link, don't embed)",
+]
+detail = "Tabular per quadrant: must-do, must-not-do, language patterns. Include the compass diagnostic questions."
+guidance = "This is the authoritative reference for quadrant rules. Use consistent formatting across all four quadrants. End with the cross-referencing table."
+
+[topics.quadrants.explanation]
+file = "explanation/diataxis-framework.md"
+status = "draft"
+covers = [
+    "The two axes (action/cognition, acquisition/application)",
+    "Why four quadrants and not three or five",
+    "The most common mistake (confusing tutorials with how-to guides)",
+    "How quadrant boundaries improve documentation quality",
+]
+detail = "Discursive. Connect to the reader's experience of bad documentation — tutorials that explain too much, reference docs that try to teach."
+guidance = "This is the 'why Diataxis works' document. Use concrete examples of boundary violations and their consequences. Link to the reference doc for the specific rules."
+
+[topics.build-pipeline]
+title = "Building and Serving"
+description = "The build pipeline, CLI commands, and local development workflow"
+complexity = "beginner"
+order = 4
+
+[topics.build-pipeline.howto]
+file = "howto/build-and-serve.md"
+status = "draft"
+covers = [
+    "Building HTML with uv run diataxis build",
+    "Serving locally with uv run diataxis serve",
+    "Rebuilding after content changes",
+    "Using a custom diataxis directory with -d",
+]
+detail = "Each task gets a numbered procedure. Show the expected terminal output. All commands use uv run."
+guidance = "Title: 'How to Build and Serve Documentation'. All commands go through uv run. The -d flag is per-subcommand — it goes after the subcommand name. Serve starts a single static server on port 8000; exercises run in the browser via Pyodide, so there is no separate marimo process. Note that mermaid blocks are pre-rendered to SVG automatically if mmdc is installed."
+
+[topics.build-pipeline.reference]
+file = "reference/cli-reference.md"
+status = "draft"
+covers = [
+    "uv run diataxis build — flags and behavior",
+    "uv run diataxis serve — flags and behavior",
+    "uv run diataxis serve-only — flags and behavior",
+    "uv run diataxis publish — flags and behavior",
+    "The -d flag for custom directories (per-subcommand)",
+    "WASM exercise export and mtime-based caching",
+    "Mermaid pre-rendering behavior (automatic if mmdc is installed)",
+]
+detail = "One subsection per subcommand. Use a consistent format: synopsis, description, flags table, examples."
+guidance = "This should look like a man page. Neutral description, no opinions. Include the default static port (8000) and directory path. Document that the -d flag is per-subcommand and must follow the subcommand name. Note that mermaid diagrams are rendered to SVG in _build/assets/mermaid/ when mmdc is available, and that exercises are exported as self-contained WASM bundles under _build/exercises/ with mtime-based caching across rebuilds. Cross-link to the build-and-serve how-to and install-and-setup how-to."
+
+[topics.scoring]
+title = "Scoring Documentation"
+description = "How to evaluate documentation quality using the scoring rubric"
+complexity = "intermediate"
+order = 5
+
+[topics.scoring.howto]
+file = "howto/score-and-revise.md"
+status = "draft"
+covers = [
+    "Running a scoring pass",
+    "Reading scores.toml output",
+    "Identifying cross-contamination",
+    "Revising based on scores",
+]
+detail = "Task-focused. Each task gets a short procedure."
+guidance = "Title: 'How to Score and Revise Documentation'. Show a sample scores.toml entry and explain how to read the comparison table. Link to the scoring reference for the full rubric."
+
+[topics.scoring.reference]
+file = "reference/scoring-rubric.md"
+status = "draft"
+covers = [
+    "The 1-5 score scale with definitions",
+    "Project-level criteria (decomposition, balance, audience, completeness)",
+    "Structural criteria (coverage, detail compliance, guidance adherence, cross-linking)",
+    "Quadrant-level criteria per type",
+    "The scores.toml output format",
+]
+detail = "Tabular. One table per scoring level. Include the comparison format."
+guidance = "Use tables for criteria. Show the exact TOML output format with a realistic example. This is the authoritative scoring reference."
