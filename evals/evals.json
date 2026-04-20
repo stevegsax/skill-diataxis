@@ -87,6 +87,73 @@
         "No prose_quality score in the entire project is below 4",
         "A scores.toml file is created with a prose_quality field for every scored file"
       ]
+    },
+    {
+      "id": 8,
+      "prompt": "This diataxis/ directory was created with an older version of the skill, before we migrated to Hugo. Upgrade it to the current format so I can build it with Hugo.",
+      "expected_output": "Every quadrant markdown file gets TOML frontmatter, hugo.toml/Makefile/go.mod are scaffolded, each quadrant has an _index.md landing page with canonical section weights, body H1s are removed, .html links become pretty-URL directory links, and the retired-tool guidance references (pandoc, mmdc, uv run diataxis build) are surfaced to the user.",
+      "files": [
+        "evals/fixtures/pre-hugo-project/diataxis/"
+      ],
+      "expectations": [
+        "hugo.toml exists in the upgraded diataxis/ directory",
+        "Makefile exists in the upgraded diataxis/ directory",
+        "go.mod exists in the upgraded diataxis/ directory",
+        "Every quadrant markdown file (tutorials/, howto/, reference/, explanation/) begins with a +++ TOML frontmatter block",
+        "No quadrant markdown file contains a body H1 (# Title at the start of the body after the frontmatter)",
+        "Each of the four quadrant directories contains an _index.md with title, weight, and a bulleted link list",
+        "_index.md section weights are explanation=10, tutorials=20, howto=30, reference=40",
+        "index.md has frontmatter with [cascade] type = \"docs\"",
+        "No markdown link target in authored files ends with .html or /index.html",
+        "The agent runs nu checks/run-checks.nu against the upgraded directory and reports that all structural checks pass",
+        "The agent identifies diataxis.toml guidance fields that still reference pandoc, mmdc, or 'uv run diataxis build' and flags them for review"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Score the diataxis documentation in evals/fixtures/pre-hugo-project/diataxis/",
+      "expected_output": "The skill detects that the fixture is in pre-Hugo format, upgrades it (or clearly explains that the upgrade must run first), and then produces a scores.toml with prose_quality scores. The skill must not attempt to score against the current Hugo rubric without first upgrading.",
+      "files": [
+        "evals/fixtures/pre-hugo-project/diataxis/"
+      ],
+      "expectations": [
+        "The agent detects the pre-Hugo state before scoring (either by inspecting for missing hugo.toml/frontmatter or by running the upgrade --check pass)",
+        "The agent either runs upgrade_to_hugo.py or explicitly surfaces the pre-Hugo state to the user before attempting to score",
+        "If the agent proceeds to score, a scores.toml is produced with prose_quality fields for every scored file",
+        "If the agent proceeds to score, the upgraded directory passes nu checks/run-checks.nu before qualitative scoring begins"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Check whether the diataxis documentation in evals/fixtures/tight-reference/diataxis/ is in the current Hugo format or an older format.",
+      "expected_output": "The skill reports that the fixture lacks Hugo frontmatter, _index.md landing pages, and hugo.toml, and describes it as pre-Hugo (or equivalent). The skill does not perform the upgrade unless asked — this prompt is just a detection request.",
+      "files": [
+        "evals/fixtures/tight-reference/diataxis/"
+      ],
+      "expectations": [
+        "The agent identifies the fixture as pre-Hugo (or equivalent phrasing: 'old format', 'needs upgrading', 'missing Hugo frontmatter')",
+        "The agent cites specific missing artifacts (frontmatter, _index.md, hugo.toml, or similar)",
+        "The agent does not modify any file in the fixture",
+        "The agent offers to run the upgrade or explains how the user can run it"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "This diataxis project was authored before we migrated to Hugo. Please bring it fully up to date — both the file format AND the guidance in diataxis.toml. Several guidance fields still reference the retired tools (pandoc, mmdc) and old build commands (uv run diataxis build). Update the structure document so the guidance reflects the current Hugo + make workflow, then regenerate any content that's now out of sync.",
+      "expected_output": "Two-stage work: (1) the mechanical upgrade (frontmatter, _index.md, scaffolding); (2) integrated revision of diataxis.toml guidance fields that referenced retired tools, without appending a 'REVISION FEEDBACK:' block — the updated guidance should read as if written from scratch with current knowledge. Affected content files should be regenerated to match the new guidance.",
+      "files": [
+        "evals/fixtures/pre-hugo-project/diataxis/"
+      ],
+      "expectations": [
+        "The mechanical upgrade ran (frontmatter present, _index.md files created, hugo.toml scaffolded)",
+        "The guidance field for topics/getting-started/tutorials no longer mentions pandoc",
+        "The guidance field for topics/getting-started/howto no longer mentions pandoc",
+        "The guidance field for topics/build-pipeline/howto no longer mentions mmdc",
+        "The guidance field for topics/build-pipeline/howto references 'make build' or 'hugo' instead of 'uv run diataxis build'",
+        "No guidance field contains a labeled 'REVISION FEEDBACK:' block (the feedback must be integrated, not appended)",
+        "The covers lists no longer reference pandoc, mmdc, or 'uv run diataxis' commands (or the agent explicitly justified leaving them)",
+        "Affected content files (tutorials/first-project.md, howto/install-and-setup.md, howto/build-and-serve.md, reference/cli-reference.md) were regenerated and no longer mention the retired tools"
+      ]
     }
   ]
 }
