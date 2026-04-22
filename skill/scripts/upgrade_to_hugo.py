@@ -24,7 +24,16 @@ This script performs the mechanical part of the migration:
      directory form.
   5. Adds frontmatter + `[cascade] type = "docs"` to the homepage
      (`index.md`) if it exists and lacks frontmatter.
-  6. Creates `_index.md` for each quadrant directory that is missing one,
+  6. Renames stray `<quadrant>/index.md` files (a common artifact of
+     documentation ported from Jekyll, MkDocs, Docusaurus, and similar
+     tools) to `<quadrant>/_index.md`. Hugo treats a directory that
+     contains `index.md` as a leaf bundle and silently suppresses the
+     section listing — the section page renders `index.md` instead of
+     the auto-generated list of child pages. Body content is preserved;
+     frontmatter is prepended if missing. If both `index.md` and
+     `_index.md` already exist in the same quadrant, the file is left
+     alone and surfaced in the report for manual resolution.
+  7. Creates `_index.md` for each quadrant directory that is missing one,
      with the canonical section weight (explanation=10, tutorials=20,
      howto=30, reference=40), a short introduction, and a bulleted list
      of links to every content file in that quadrant ordered by weight.
@@ -164,6 +173,20 @@ def detect_pre_hugo(diataxis_dir: Path) -> dict:
             missing_landing.append(f"{quadrant}/_index.md")
     if missing_landing:
         report["missing_quadrant_landing_pages"] = missing_landing
+
+    # `<quadrant>/index.md` is a common artifact of docs ported from tools
+    # that use `index.md` as a section landing page (Jekyll, MkDocs,
+    # Docusaurus, pre-Hugo versions of this skill with hand-written
+    # landing pages). Hugo treats any directory containing `index.md` as
+    # a leaf bundle and hides the section listing, so these files have to
+    # move to `_index.md` before the site renders correctly.
+    stray_quadrant_index: list[str] = []
+    for quadrant in QUADRANT_WEIGHTS:
+        qdir = diataxis_dir / quadrant
+        if qdir.is_dir() and (qdir / "index.md").exists():
+            stray_quadrant_index.append(f"{quadrant}/index.md")
+    if stray_quadrant_index:
+        report["stray_quadrant_index_files"] = stray_quadrant_index
 
     index_md = diataxis_dir / "index.md"
     if index_md.exists() and not index_md.read_text().startswith("+++"):
@@ -361,6 +384,61 @@ def read_title(md_path: Path) -> str:
     return title_from_filename(md_path)
 
 
+def promote_stray_quadrant_index(diataxis_dir: Path, quadrant: str) -> str | None:
+    """Rename ``<quadrant>/index.md`` to ``<quadrant>/_index.md``.
+
+    Hugo distinguishes *leaf bundles* from *branch bundles* by the name of
+    the landing page: ``index.md`` makes the directory a leaf bundle (a
+    single page with attachments), while ``_index.md`` makes it a branch
+    bundle (a section page that lists its children). A section directory
+    that contains ``index.md`` will serve that page and never list the
+    child pages underneath, so a migrated ``tutorials/index.md`` from
+    another tool silently breaks the section. This function preserves the
+    user's content — body, any existing frontmatter — and just fixes the
+    name. If frontmatter is missing, canonical section frontmatter is
+    prepended using the first body H1 as the title when present.
+
+    Returns a short status message describing the outcome, or ``None`` if
+    there is no ``index.md`` in this quadrant.
+    """
+    qdir = diataxis_dir / quadrant
+    if not qdir.is_dir():
+        return None
+    stray = qdir / "index.md"
+    if not stray.exists():
+        return None
+    target = qdir / "_index.md"
+    if target.exists():
+        # Two landing pages would compete. Refuse to guess which the user
+        # wants — surface it instead and let a human pick one.
+        return (
+            f"{quadrant}/index.md and {quadrant}/_index.md both exist — "
+            "delete the one you don't want before re-running the upgrade"
+        )
+
+    text = stray.read_text()
+    if text.startswith("+++"):
+        stray.rename(target)
+        return f"renamed {quadrant}/index.md to _index.md"
+
+    title, body = extract_h1(text)
+    if title is None:
+        title = QUADRANT_LABELS[quadrant]
+    body = rewrite_html_links(body)
+
+    fm_lines = [
+        "+++",
+        f"title = {toml_str(title)}",
+        f"weight = {SECTION_WEIGHTS[quadrant]}",
+        f"description = {toml_str(f'{QUADRANT_LABELS[quadrant]} — section landing page.')}",
+        "+++",
+    ]
+    frontmatter = "\n".join(fm_lines) + "\n"
+    target.write_text(frontmatter + body.lstrip("\n"))
+    stray.unlink()
+    return f"renamed {quadrant}/index.md to _index.md (added frontmatter)"
+
+
 def ensure_quadrant_landing(diataxis_dir: Path, structure: dict, quadrant: str) -> bool:
     qdir = diataxis_dir / quadrant
     if not qdir.is_dir():
@@ -485,6 +563,14 @@ def run_upgrade(diataxis_dir: Path) -> dict:
         md = diataxis_dir / rel_path
         if md.exists() and upgrade_content_file(md, topic_slug, topic, quadrant, entry):
             changes.append(f"upgraded {rel_path}")
+
+    # Promote stray `index.md` files before creating missing landing pages
+    # so the new `_index.md` does not collide with a file we are about to
+    # rename into place.
+    for quadrant in QUADRANT_WEIGHTS:
+        msg = promote_stray_quadrant_index(diataxis_dir, quadrant)
+        if msg is not None:
+            changes.append(msg)
 
     for quadrant in QUADRANT_WEIGHTS:
         if ensure_quadrant_landing(diataxis_dir, structure, quadrant):

@@ -102,13 +102,16 @@ from here:
 1. **Absent or empty** — no `diataxis/` directory, or one that contains no
    `diataxis.toml`. This is a new project. Skip ahead to "Scaffolding a new
    project" below.
-2. **Pre-Hugo format** — a `diataxis/` directory authored under an earlier
-   version of this skill. You will see one or more of: no `hugo.toml`
-   alongside `diataxis.toml`; no `Makefile` or `go.mod`; quadrant markdown
-   files that start with an ATX H1 (`# Title`) instead of a `+++`-delimited
+2. **Pre-Hugo format, or ported from another publishing tool** — a
+   `diataxis/` directory authored under an earlier version of this skill,
+   or imported from Jekyll, MkDocs, Docusaurus, GitBook, Sphinx, or
+   similar. You will see one or more of: no `hugo.toml` alongside
+   `diataxis.toml`; no `Makefile` or `go.mod`; quadrant markdown files
+   that start with an ATX H1 (`# Title`) instead of a `+++`-delimited
    frontmatter block; no `_index.md` inside any quadrant directory;
-   internal links targeting `.html` files. **Upgrade it before doing any
-   other work** — see the next subsection.
+   a stray `index.md` inside any quadrant directory (see "`_index.md` vs
+   `index.md`" below); internal links targeting `.html` files.
+   **Upgrade it before doing any other work** — see the next subsection.
 3. **Current Hugo format** — `hugo.toml` is present, quadrant files begin
    with `+++` frontmatter, and each quadrant directory has an `_index.md`.
    Proceed with the normal add/update flow below.
@@ -137,10 +140,22 @@ frontmatter to every quadrant markdown file (title from the file's body
 H1, weight from `topic.order * 10 + quadrant_weight`, `topic`/`covers`/
 `detail` from the matching `diataxis.toml` entry), drops the body H1,
 rewrites `.html` links to Hugo pretty-URL directory form, adds a
-`[cascade]` table to `index.md`, and creates the four `_index.md`
-quadrant landing pages with canonical section weights. Read
-`references/hugo-migration.md` for the full catalog of what the upgrade
-does and does not do.
+`[cascade]` table to `index.md`, renames stray `<quadrant>/index.md`
+files to `_index.md` (preserving the body and adding frontmatter if
+missing), and creates the four `_index.md` quadrant landing pages with
+canonical section weights. Read `references/hugo-migration.md` for the
+full catalog of what the upgrade does and does not do.
+
+**`_index.md` vs `index.md`.** Hugo treats a section directory that
+contains `index.md` (no underscore) as a *leaf bundle* — one page plus
+attachments — and silently hides every other file in the directory. So
+`tutorials/index.md`, the convention in Jekyll, MkDocs, Docusaurus, and
+most wiki-style tools, will break the Tutorials section: every tutorial
+file on disk stops appearing on the section page. The landing page in
+a Hugo section must be `_index.md` (with the underscore). The upgrade
+script detects stray `<quadrant>/index.md` files and renames them. The
+rule only applies to subdirectories; the root `diataxis/index.md` is
+correct — `hugo.toml` mounts it to `content/_index.md` at build time.
 
 After the script finishes, do two things before you continue:
 

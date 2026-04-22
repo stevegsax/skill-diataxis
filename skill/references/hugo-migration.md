@@ -3,14 +3,42 @@
 Earlier versions of this skill shipped a custom Python build pipeline; the
 current skill targets a plain Hugo site. The `diataxis.toml` schema has not
 changed, but everything around it has. When the skill is pointed at a
-project authored under the old pipeline, the quadrant markdown, the
-homepage, and the publishing config all need to change shape before any
-new work — generation, scoring, or revision — can run.
+project authored under the old pipeline — or at a documentation set
+ported from another publishing tool (Jekyll, MkDocs, Docusaurus, GitBook,
+Sphinx, etc.) — the quadrant markdown, the homepage, and the publishing
+config all need to change shape before any new work — generation,
+scoring, or revision — can run.
 
 The mechanical half of that migration is handled by
 `skill/scripts/upgrade_to_hugo.py`. This reference explains what the old
 projects look like, what the upgrade does (and does not) do, and how to
 verify the result.
+
+## The `_index.md` rule
+
+Hugo distinguishes *section* directories (which list their children) from
+*leaf bundle* directories (a single page with its attachments) by the
+name of the landing file:
+
+- `_index.md` (with the underscore) turns a directory into a **section**.
+  Hugo renders its contents and lists every child page.
+- `index.md` (no underscore) turns a directory into a **leaf bundle**.
+  Hugo renders the page and silently suppresses every other page in the
+  same directory — the section listing disappears.
+
+Most other documentation tools (Jekyll, MkDocs, Docusaurus, older
+versions of this skill with hand-written landing pages) use `index.md`
+as the section landing page. Ported straight across, an imported
+`tutorials/index.md` will break the Tutorials section: the individual
+tutorials exist on disk and pass link checks, but they will not appear
+on the section page and their URLs may not resolve. This is a silent
+failure — Hugo does not warn about it — so the upgrade script detects
+and fixes it (see below).
+
+The rule only applies to *subdirectories*. At the root of
+`diataxis/`, the homepage is authored as `index.md`; `hugo.toml` mounts
+it to `content/_index.md` at build time. Do not rename the root
+`diataxis/index.md`.
 
 ## How to tell you have a pre-Hugo project
 
@@ -22,6 +50,8 @@ Hugo migration:
 - Quadrant markdown files (e.g. `tutorials/first-project.md`) start with an
   ATX H1 (`# Title`) instead of a `+++`-delimited TOML frontmatter block.
 - Quadrant directories have no `_index.md` section landing page.
+- Any quadrant directory contains an `index.md` (the other-tool convention
+  — will silently break the section, see "The `_index.md` rule" above).
 - Internal links point at `.html` targets (`tutorials/index.html`) instead
   of Hugo pretty URLs (`tutorials/`).
 - Guidance or prose references retired tools: `pandoc`, `mmdc`,
@@ -39,12 +69,12 @@ output.
 
 ## Shape differences at a glance
 
-| Concern               | Pre-Hugo                                    | Hugo                                              |
+| Concern               | Pre-Hugo / other tool                       | Hugo                                              |
 |-----------------------|---------------------------------------------|---------------------------------------------------|
 | Publishing config     | None (Python CLI)                           | `hugo.toml`, `Makefile`, `go.mod`                 |
 | Content file header   | `# Title` body H1                           | `+++ title = "…" weight = … … +++` frontmatter    |
 | Homepage              | `index.md` with body H1                     | `index.md` with frontmatter + `[cascade] type`    |
-| Quadrant landing page | Not present                                 | `_index.md` per quadrant with fixed section weight|
+| Quadrant landing page | Missing, or `quadrant/index.md`             | `_index.md` per quadrant with fixed section weight|
 | Internal link form    | `tutorials/foo.html`, `.../index.html`      | `tutorials/foo/` (directory-form pretty URL)      |
 | Exercise bundles      | `uv run diataxis build` → `_build/exercises`| `make exercises` → `static/exercises/<stem>/`     |
 
@@ -77,12 +107,22 @@ Running `python skill/scripts/upgrade_to_hugo.py <diataxis_dir>`:
    frontmatter: prepends `title`, `description`, and a `[cascade]` table
    setting `type = "docs"` so every child page inherits the theme's docs
    layout.
-6. **Creates `_index.md`** in every quadrant directory that is missing
-   one. Each landing page carries the canonical section weight
-   (explanation=10, tutorials=20, howto=30, reference=40), a short
-   introduction describing the quadrant, and a bulleted list of links to
-   every content file in that quadrant sorted by weight.
-7. **Flags `diataxis.toml` guidance** that references retired tools
+6. **Renames stray `<quadrant>/index.md` files** to
+   `<quadrant>/_index.md`. If the file already has TOML frontmatter it
+   is renamed as-is; if not, canonical section frontmatter is prepended
+   (`title` from the first body H1 when present, `weight` set to the
+   canonical section weight, `description` set to a short default) and
+   the body is preserved with `.html` links rewritten. If both
+   `<quadrant>/index.md` and `<quadrant>/_index.md` already exist, the
+   script refuses to guess which the user wants to keep — it surfaces
+   the collision in the report and leaves both files alone.
+7. **Creates `_index.md`** in every quadrant directory that is still
+   missing one after the rename step. Each landing page carries the
+   canonical section weight (explanation=10, tutorials=20, howto=30,
+   reference=40), a short introduction describing the quadrant, and a
+   bulleted list of links to every content file in that quadrant
+   sorted by weight.
+8. **Flags `diataxis.toml` guidance** that references retired tools
    (`pandoc`, `mmdc`, `uv run diataxis build`, `_build/`). These are
    reported in the script's output but **not** rewritten — guidance
    encodes the author's editorial intent and must be updated through the
@@ -110,6 +150,11 @@ rewritten; existing publishing-config files are never overwritten.
   `diataxis.toml` but does not modify it. If the file fails
   `nu checks/check-toml-structure.nu`, fix it first — the upgrade needs a
   valid structure document to map files to metadata.
+- **Resolve `index.md` / `_index.md` collisions.** When both files exist
+  in the same quadrant, the script leaves them alone and flags the
+  conflict. Delete whichever file is stale (the imported `index.md` is
+  usually it), then re-run the upgrade so the remaining file ends up
+  correctly named with frontmatter.
 
 ## After the upgrade — verify
 
