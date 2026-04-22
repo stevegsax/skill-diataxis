@@ -411,11 +411,22 @@ to each exercise's standalone page (`/exercises/<stem>/`). The exercise stem
 is the file name without the `.py` extension. These bundles are produced by
 `make exercises` and served as standalone pages with their own look and feel.
 
-**Math notation**: All mathematical expressions must use LaTeX notation with
-standard delimiters. Use `$...$` or `\(...\)` for inline math and `$$...$$`
-or `\[...\]` for display/block math. The Hugo theme renders it at build time
-(KaTeX in the default Hextra theme). Never write math as plain text like
-`3/4 + 1/2` when it can be expressed as `$\frac{3}{4} + \frac{1}{2}$`.
+**Math notation**: All mathematical expressions must use LaTeX notation.
+Use `\(...\)` for inline math and `\[...\]` for display math. These are
+LaTeX's canonical delimiters and do not collide with literal dollar
+signs in prose. The Hugo theme renders them at build time (KaTeX in the
+default Hextra theme).
+
+The TeX-derived `$...$` / `$$...$$` form that most other static-site
+generators use (and that an earlier version of this skill accepted) is
+also rendered by KaTeX, but the skill canonicalizes on the backslash
+form for authoring. When `upgrade_to_hugo.py` runs on a project
+imported from the old pipeline or from Jekyll, MkDocs, Docusaurus,
+etc., it rewrites dollar-delimited math to the backslash form; new
+content should be written that way from the start.
+
+Never write math as plain text like `3/4 + 1/2` when it can be
+expressed as `\(\frac{3}{4} + \frac{1}{2}\)`.
 
 **Diagrams**: Use mermaid format for all diagrams (flowcharts, sequence diagrams,
 entity-relationship diagrams, etc.). Write them as fenced code blocks with the

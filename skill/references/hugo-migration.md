@@ -54,6 +54,10 @@ Hugo migration:
   — will silently break the section, see "The `_index.md` rule" above).
 - Internal links point at `.html` targets (`tutorials/index.html`) instead
   of Hugo pretty URLs (`tutorials/`).
+- Math expressions use `$...$` / `$$...$$` delimiters. The skill
+  canonicalizes on the LaTeX `\(...\)` / `\[...\]` form (see the Math
+  notation section of SKILL.md); the upgrade rewrites dollar-delimited
+  math to the backslash form.
 - Guidance or prose references retired tools: `pandoc`, `mmdc`,
   `uv run diataxis build`, or an output directory of `diataxis/_build/`.
 
@@ -76,6 +80,7 @@ output.
 | Homepage              | `index.md` with body H1                     | `index.md` with frontmatter + `[cascade] type`    |
 | Quadrant landing page | Missing, or `quadrant/index.md`             | `_index.md` per quadrant with fixed section weight|
 | Internal link form    | `tutorials/foo.html`, `.../index.html`      | `tutorials/foo/` (directory-form pretty URL)      |
+| Math delimiters       | `$...$` / `$$...$$`                         | `\(...\)` / `\[...\]`                             |
 | Exercise bundles      | `uv run diataxis build` → `_build/exercises`| `make exercises` → `static/exercises/<stem>/`     |
 
 `diataxis.toml` itself is structurally unchanged between the two eras.
@@ -122,7 +127,19 @@ Running `python skill/scripts/upgrade_to_hugo.py <diataxis_dir>`:
    reference=40), a short introduction describing the quadrant, and a
    bulleted list of links to every content file in that quadrant
    sorted by weight.
-8. **Flags `diataxis.toml` guidance** that references retired tools
+8. **Rewrites math delimiters.** `$...$` becomes `\(...\)` and
+   `$$...$$` becomes `\[...\]` everywhere in content bodies. Fenced
+   code blocks and inline code are preserved verbatim. Inline dollar
+   spans are only converted when the content looks like math — a
+   LaTeX command, a sub/superscript, a lone variable, or a short
+   expression with math operators — so prose mentions of currency
+   ("costs $5 and $10") are not clobbered. Review the diff after
+   upgrade; the heuristic is conservative but not infallible, and any
+   prose that matched the "looks like math" criteria will need to be
+   restored manually. (One common case: a sentence like "the variable
+   `$foo` in Bash is …" inside plain prose would be rewritten, but
+   the same line written with `` `$foo` `` as inline code would not.)
+9. **Flags `diataxis.toml` guidance** that references retired tools
    (`pandoc`, `mmdc`, `uv run diataxis build`, `_build/`). These are
    reported in the script's output but **not** rewritten — guidance
    encodes the author's editorial intent and must be updated through the

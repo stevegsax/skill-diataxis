@@ -24,8 +24,13 @@ def main [diataxis_dir: string] {
         let no_code = ($content | str replace --regex --all '(?s)```.*?```' '' | str replace --regex --all '`[^`]+`' '')
         # Look for plain fractions like 3/4 not part of a path or URL
         let has_plain = ($no_code | find --regex '\b\d+/\d+\b' | length) > 0
-        # Look for LaTeX markers
-        let has_latex = ($content | str contains "$") and ($content | find --regex '\$[^$]+\$' | length) > 0
+        # Look for LaTeX markers — either the canonical `\(...\)` / `\[...\]`
+        # delimiters or the older `$...$` / `$$...$$` form that the upgrade
+        # script converts.
+        let has_paren_latex = ($content | find --regex '\\\(.+?\\\)' | length) > 0
+        let has_bracket_latex = ($content | find --regex '(?s)\\\[.+?\\\]' | length) > 0
+        let has_dollar_latex = ($content | str contains "$") and ($content | find --regex '\$[^$]+\$' | length) > 0
+        let has_latex = $has_paren_latex or $has_bracket_latex or $has_dollar_latex
         if $has_plain and (not $has_latex) {
             $entry.rel
         }

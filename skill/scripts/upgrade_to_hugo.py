@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Upgrade a pre-Hugo diataxis/ directory in place.
+r"""Upgrade a pre-Hugo diataxis/ directory in place.
 
 Pre-Hugo projects were produced by an earlier build pipeline. They use the
 same `diataxis.toml` schema as the current Hugo pipeline, but the markdown
@@ -37,6 +37,13 @@ This script performs the mechanical part of the migration:
      with the canonical section weight (explanation=10, tutorials=20,
      howto=30, reference=40), a short introduction, and a bulleted list
      of links to every content file in that quadrant ordered by weight.
+  8. Rewrites math delimiters: `$...$` → `\(...\)` and `$$...$$` →
+     `\[...\]`. The dollar-sign form is what the pre-Hugo diataxis
+     pipeline and most other static-site generators use; the skill
+     canonicalizes on the LaTeX form. Code blocks (fenced and inline)
+     are preserved verbatim, and inline dollar spans are only
+     converted when the content looks like math so prose mentions of
+     currency ("costs $5") are not clobbered.
 
 Idempotent: running on an already-upgraded directory is a no-op. Files
 with existing frontmatter are never rewritten. `hugo.toml`, `Makefile`,
@@ -192,6 +199,25 @@ def detect_pre_hugo(diataxis_dir: Path) -> dict:
     if index_md.exists() and not index_md.read_text().startswith("+++"):
         report["homepage_without_frontmatter"] = "index.md"
 
+    # Files that use `$...$` / `$$...$$` for math — the inheritance from
+    # TeX that most non-Hugo static-site generators share. The skill's
+    # canonical form is `\(...\)` / `\[...\]`, and the upgrade rewrites
+    # these in place.
+    dollar_math: list[str] = []
+    candidates = [index_md] if index_md.exists() else []
+    for quadrant in QUADRANT_WEIGHTS:
+        qdir = diataxis_dir / quadrant
+        if qdir.is_dir():
+            candidates.extend(sorted(qdir.glob("*.md")))
+    for md in candidates:
+        try:
+            if _has_dollar_math(md.read_text()):
+                dollar_math.append(str(md.relative_to(diataxis_dir)))
+        except OSError:
+            continue
+    if dollar_math:
+        report["dollar_delimited_math"] = dollar_math
+
     return report
 
 
@@ -249,6 +275,92 @@ def build_file_index(structure: dict) -> dict[str, tuple[str, dict, str, dict]]:
 
 
 _HTML_LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)\s]+)\)")
+
+# Math-delimiter rewriting. Pre-Hugo diataxis projects — and most static
+# site generators outside Hugo (Jekyll, MkDocs, Docusaurus, GitBook) —
+# use `$...$` / `$$...$$` for math, inherited from TeX. The skill
+# canonicalizes on LaTeX's `\(...\)` / `\[...\]` form, which does not
+# collide with literal dollar signs in prose and is less sensitive to
+# downstream-tooling quirks.
+_FENCED_CODE_RE = re.compile(r"```.*?```|~~~.*?~~~", re.DOTALL)
+_INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
+_DISPLAY_MATH_RE = re.compile(r"\$\$(.+?)\$\$", re.DOTALL)
+# Inline math: `$...$` with no adjacent `$` (which would be display math)
+# and no leading backslash (`\$` is an escaped dollar, not math).
+_INLINE_MATH_RE = re.compile(r"(?<![\$\\])\$(?!\$)([^\$\n]+?)(?<![\$\\])\$(?!\$)")
+
+
+def _looks_like_math(span: str) -> bool:
+    """Heuristic: does the span between `$` delimiters look like LaTeX?
+
+    Inline dollar rewriting has to avoid false-converting prose that
+    mentions currency — `"costs $5 and $10"` must stay intact. A real
+    math span almost always contains one of: a LaTeX command
+    (backslash), a sub/superscript/brace marker, a relation operator
+    (`=`, `<`, `>`), or a short symbolic expression. Prose dollars
+    don't.
+    """
+    if "\\" in span:
+        return True
+    if re.search(r"[\^_{}=<>]", span):
+        return True
+    # Lone variable or short symbol: `x`, `n`, `E_0`, `x_1`
+    if re.fullmatch(r"\s*[a-zA-Z][a-zA-Z\d]{0,4}\s*", span):
+        return True
+    # Expression with math operators and alphanumerics
+    if re.search(r"[+\-*/]", span) and re.search(r"\w", span):
+        return True
+    return False
+
+
+def rewrite_math_delimiters(body: str) -> str:
+    """Convert `$...$` → `\\(...\\)` and `$$...$$` → `\\[...\\]`.
+
+    Fenced code blocks and inline code are preserved verbatim — a
+    tutorial whose examples show the `$` character must not have its
+    markup rewritten. Inline `$...$` conversion is gated on a "looks
+    like math" heuristic so prose that happens to mention dollar
+    amounts is not clobbered.
+    """
+    protected: list[str] = []
+
+    def stash(match: re.Match) -> str:
+        protected.append(match.group(0))
+        return f"\x00STASH{len(protected) - 1}\x00"
+
+    working = _FENCED_CODE_RE.sub(stash, body)
+    working = _INLINE_CODE_RE.sub(stash, working)
+
+    # Display math first — $$...$$ is unambiguous and may span multiple
+    # lines, so let it consume those spans before inline math sees them.
+    working = _DISPLAY_MATH_RE.sub(
+        lambda m: f"\\[{m.group(1)}\\]", working
+    )
+
+    def replace_inline(m: re.Match) -> str:
+        content = m.group(1)
+        if _looks_like_math(content):
+            return f"\\({content}\\)"
+        return m.group(0)
+
+    working = _INLINE_MATH_RE.sub(replace_inline, working)
+
+    for i, snippet in enumerate(protected):
+        working = working.replace(f"\x00STASH{i}\x00", snippet)
+
+    return working
+
+
+def _has_dollar_math(text: str) -> bool:
+    """True if `text` contains dollar-delimited math outside code spans."""
+    protected = _FENCED_CODE_RE.sub("", text)
+    protected = _INLINE_CODE_RE.sub("", protected)
+    if _DISPLAY_MATH_RE.search(protected):
+        return True
+    for m in _INLINE_MATH_RE.finditer(protected):
+        if _looks_like_math(m.group(1)):
+            return True
+    return False
 
 
 def rewrite_html_links(body: str) -> str:
@@ -327,6 +439,7 @@ def upgrade_content_file(
     detail = entry.get("detail") or ""
 
     body = rewrite_html_links(body)
+    body = rewrite_math_delimiters(body)
 
     frontmatter = build_frontmatter(
         title=title,
@@ -355,6 +468,7 @@ def upgrade_homepage(diataxis_dir: Path, structure: dict) -> bool:
     description = project.get("description") or ""
 
     body = rewrite_html_links(body)
+    body = rewrite_math_delimiters(body)
 
     fm_lines = [
         "+++",
@@ -425,6 +539,7 @@ def promote_stray_quadrant_index(diataxis_dir: Path, quadrant: str) -> str | Non
     if title is None:
         title = QUADRANT_LABELS[quadrant]
     body = rewrite_html_links(body)
+    body = rewrite_math_delimiters(body)
 
     fm_lines = [
         "+++",
