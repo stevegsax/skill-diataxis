@@ -293,12 +293,49 @@ When spawning subagents for generation, provide each one with:
 - How-to guides: task-focused, no teaching, assume competence
 - Reference: describe only, mirror product structure, use tables
 
-**Cross-linking**: Every file should link to its sibling quadrant docs. A tutorial
-should link to the relevant explanation and reference. A how-to should link to
-reference. These links use relative paths within the documentation directory.
-Hugo serves pages at pretty URLs (e.g. `/tutorials/first-project/`), so
-relative links between files should use the directory form (`../reference/foo/`),
-not the `.md` or `.html` form.
+**Cross-linking**: Every file should link to its sibling quadrant docs. A
+tutorial should link to the relevant explanation and reference. A how-to
+should link to reference. Link targets use Hugo pretty-URL directory form
+(`/tutorials/first-project/`, never `.md` or `.html`).
+
+The resolution rules are **not intuitive** because Hugo publishes
+`tutorials/foo.md` at the URL `/tutorials/foo/` (one level deeper than
+the source file), and the browser resolves every relative link against
+that trailing-slash URL per RFC 3986. Writing cross-quadrant links
+"the way the source tree looks" produces 404s. The guidance below gets
+it right; `references/link-resolution.md` explains why.
+
+**Prefer absolute paths for cross-quadrant links.** Because `hugo.toml`
+sets `relativeURLs = true`, Hugo rewrites absolute URLs to the correct
+form for each page at build time. Authors who use `/explanation/foo/`
+do not need to count `../` segments at all, and the output is correct
+everywhere.
+
+Link patterns by source file location:
+
+| Source file                    | Same-quadrant sibling | Cross-quadrant target                                     | Exercise bundle   |
+|--------------------------------|-----------------------|-----------------------------------------------------------|-------------------|
+| `tutorials/foo.md` (etc.)      | `../bar/`             | `/explanation/bar/` (preferred) or `../../explanation/bar/` | `/exercises/bar/` |
+| `<quadrant>/_index.md`         | `bar/`                | `/explanation/bar/` (preferred) or `../explanation/bar/`  | `/exercises/bar/` |
+| `index.md` (site homepage)     | —                     | `tutorials/bar/`, `explanation/bar/`, etc.                | `exercises/bar/`  |
+
+Three patterns that look right but are wrong, in every content file:
+
+- `](../explanation/bar/)` from a tutorial — resolves to
+  `/tutorials/explanation/bar/`, not `/explanation/bar/`. Cross-quadrant
+  links from content files need two `../`, or an absolute path.
+- `](bar/)` with no `../` — resolves inside the current page's URL
+  (`/tutorials/foo/bar/`). Same-quadrant siblings always need `../`.
+- `](../tutorials/bar/)` from a tutorial — resolves to
+  `/tutorials/tutorials/bar/`. Same-quadrant links must not repeat the
+  quadrant name; use `../bar/`.
+
+The `check-link-form` deterministic check catches these two patterns
+(`](../<same-quadrant>/…)` and `](../<other-quadrant>/…)` inside
+content files) before build. If a subagent generates links and you are
+about to score or build, run `nu checks/run-checks.nu <diataxis_dir>`
+first — link-form failures name file and line so they are cheap to
+fix.
 
 **Hugo frontmatter**: Every generated markdown file starts with a TOML
 frontmatter block (`+++` delimiters) containing at least `title`, `weight`,
@@ -582,6 +619,7 @@ These files contain detailed specifications. Read them when you need the details
 - `references/structure-schema.md` — Full `diataxis.toml` schema with all fields
 - `references/scoring.md` — Scoring rubric, output format, and comparison logic
 - `references/build-pipeline.md` — Build and serve pipeline technical details
+- `references/link-resolution.md` — Why cross-quadrant links need two `../` (or absolute), with the per-source-location table
 - `references/hugo-migration.md` — Detecting pre-Hugo projects and what the upgrade script does
 - `scripts/upgrade_to_hugo.py` — Detect (`--check`) and migrate pre-Hugo projects to the current Hugo format
 - `checks/run-checks.nu` — Deterministic check runner (invoke with `nu checks/run-checks.nu <dir>`)

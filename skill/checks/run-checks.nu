@@ -22,6 +22,7 @@ const CHECKS = [
     check-code-examples
     # Cross-linking checks
     check-cross-links
+    check-link-form
 ]
 
 def main [diataxis_dir: string] {
