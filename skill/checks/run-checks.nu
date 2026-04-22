@@ -14,6 +14,7 @@ const CHECKS = [
     check-exercise-exists
     # Format checks
     check-marimo-format
+    check-exercise-content
     check-latex-math
     # Quadrant rule checks
     check-howto-titles

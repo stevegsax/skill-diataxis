@@ -423,13 +423,27 @@ entity-relationship diagrams, etc.). Write them as fenced code blocks with the
 client-side at view time.
 
 **Exercises**: For tutorials in learning-path projects, create marimo `.py`
-notebooks under `diataxis/exercises/`. These are authored as standard marimo
-notebooks. The Makefile exports each one to a self-contained WASM HTML bundle
-(via `marimo export html-wasm`) at `diataxis/static/exercises/<stem>/` that
-runs in the browser via Pyodide — no marimo server process is required to
-view the published output. Each exercise file should be self-contained and
-focused on one concept, and must only depend on packages available to
-Pyodide.
+notebooks under `diataxis/exercises/`. Every exercise listed in a
+tutorial's `exercises = [...]` entry in `diataxis.toml` must exist as a
+real, interactive notebook — placeholder stubs (one cell, `# TODO`
+bodies, bare `pass`) are not acceptable. If a tutorial lists an
+exercise, authoring the notebook is part of that tutorial's generation
+task, not a follow-up. A subagent generating `tutorials/foo.md` with
+`exercises = ["exercises/foo-practice.py"]` must produce both files
+before the task is done.
+
+Read `references/exercises.md` for the shape of a real exercise — at
+minimum, a setup cell plus a UI cell plus a response cell that reads
+the UI's value and renders something based on it. The deterministic
+checks `check-exercise-exists` and `check-exercise-content` enforce
+existence and non-placeholder content; both run during scoring.
+
+The Makefile exports each notebook to a self-contained WASM HTML
+bundle (via `marimo export html-wasm`) at
+`diataxis/static/exercises/<stem>/` that runs in the browser via
+Pyodide — no marimo server is required to view the published output.
+Every imported package must be Pyodide-compatible; when in doubt,
+stick to the standard library.
 
 **Deterministic transforms**: When a task is purely mechanical (converting markdown
 to HTML, formatting tables, validating structure), use the appropriate tool — not
@@ -472,11 +486,27 @@ scoring:
 nu checks/run-checks.nu <diataxis_dir>
 ```
 
-This outputs JSON with pass/fail/skip/error results for 12 structural, format,
+This outputs JSON with pass/fail/skip/error results for structural, format,
 quadrant rule, and cross-linking checks. If any checks fail, present the
 failures and their suggestions to the user and wait for direction before
 proceeding to Phase 2. The user may ask you to fix issues, or they may say
 "score anyway." Do not proceed to qualitative scoring silently when checks fail.
+
+**Exercise-check failures are a deterministic remediation, not a user
+decision.** When `check-exercise-exists` or `check-exercise-content`
+fail, the cause is that the skill's generation step listed an exercise
+in `diataxis.toml` but did not produce the corresponding marimo file
+(or produced a placeholder stub). The fix is the same as writing the
+exercise in the first place: read the tutorial's `covers`, `detail`,
+and `guidance`, then author a real interactive notebook per
+`references/exercises.md`. Do this in the scoring follow-up rather
+than presenting it as a choice — the user asked for a score; giving
+them a list of missing exercises they need to approve generating is
+making them do the skill's job. Generate the missing notebooks, then
+re-run the checks, then proceed with scoring. If an entry in the
+`exercises` list is outdated and the user no longer wants an exercise
+there, they will tell you — treat that as feedback and update
+`diataxis.toml`.
 
 **Phase 2: Qualitative scoring.** Once deterministic checks pass (or the user
 explicitly says to continue), evaluate the documentation qualitatively.
@@ -620,6 +650,7 @@ These files contain detailed specifications. Read them when you need the details
 - `references/scoring.md` — Scoring rubric, output format, and comparison logic
 - `references/build-pipeline.md` — Build and serve pipeline technical details
 - `references/link-resolution.md` — Why cross-quadrant links need two `../` (or absolute), with the per-source-location table
+- `references/exercises.md` — What a real marimo exercise looks like (template + guidance), for generation and for remediation when `check-exercise-content` fails
 - `references/hugo-migration.md` — Detecting pre-Hugo projects and what the upgrade script does
 - `scripts/upgrade_to_hugo.py` — Detect (`--check`) and migrate pre-Hugo projects to the current Hugo format
 - `checks/run-checks.nu` — Deterministic check runner (invoke with `nu checks/run-checks.nu <dir>`)
