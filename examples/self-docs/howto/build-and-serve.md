@@ -89,4 +89,4 @@ Pages, or `rsync`. See https://gohugo.io/hosting-and-deployment/ for the
 full catalog.
 
 For the detailed reference, see
-[Build Commands Reference](../reference/cli-reference/).
+[Build Commands Reference](/reference/cli-reference/).

@@ -9,13 +9,19 @@ const CHECKS = [
     check-toml-structure
     check-quadrant-files
     check-quadrant-order
+    check-weight-arithmetic
+    check-duplicate-weights
     check-orphan-files
     check-status-consistency
     check-exercise-exists
+    check-orphan-exercises
     # Format checks
     check-marimo-format
+    check-marimo-ast
+    check-pyodide-imports
     check-exercise-content
     check-latex-math
+    check-todo-markers
     # Quadrant rule checks
     check-howto-titles
     check-tables-in-reference
@@ -24,6 +30,8 @@ const CHECKS = [
     # Cross-linking checks
     check-cross-links
     check-link-form
+    check-internal-links
+    check-missing-static-assets
 ]
 
 def main [diataxis_dir: string] {

@@ -147,9 +147,9 @@ The Makefile exits with Hugo's or marimo's exit code:
 
 ## See also
 
-- [How to Build and Serve Documentation](../howto/build-and-serve/) — the
+- [How to Build and Serve Documentation](/howto/build-and-serve/) — the
   task-focused walkthrough for the same commands.
-- [How to Install and Set Up](../howto/install-and-setup/) — installing
+- [How to Install and Set Up](/howto/install-and-setup/) — installing
   `uv`, Hugo extended, Go, make, and marimo.
-- [diataxis.toml Schema](../reference/diataxis-toml-schema/) — the manifest
+- [diataxis.toml Schema](../diataxis-toml-schema/) — the manifest
   these commands read.

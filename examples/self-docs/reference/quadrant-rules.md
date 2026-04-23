@@ -117,4 +117,4 @@ Two questions classify any content:
 2. Does this serve **acquisition** or **application**?
 
 For background on why these quadrants exist, see
-[The Diataxis Framework](../explanation/diataxis-framework/).
+[The Diataxis Framework](/explanation/diataxis-framework/).

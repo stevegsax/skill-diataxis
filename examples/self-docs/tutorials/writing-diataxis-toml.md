@@ -205,6 +205,6 @@ You have built a `diataxis.toml` that defines:
 - Scoring contracts via `covers` and content guidance via `guidance`
 
 For the full list of fields and their valid values, see the
-[diataxis.toml Schema](../reference/diataxis-toml-schema/). To understand
+[diataxis.toml Schema](/reference/diataxis-toml-schema/). To understand
 why the structure document comes before content, see
-[Why Structure First](../explanation/why-structure-first/).
+[Why Structure First](/explanation/why-structure-first/).

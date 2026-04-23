@@ -80,6 +80,6 @@ exercises = ["exercises/auth-exercise.py"]
 ```
 
 For a walkthrough of building this file, see the
-[Writing diataxis.toml](../tutorials/writing-diataxis-toml/) tutorial. For
+[Writing diataxis.toml](/tutorials/writing-diataxis-toml/) tutorial. For
 why the structure document matters, see
-[Why Structure First](../explanation/why-structure-first/).
+[Why Structure First](/explanation/why-structure-first/).

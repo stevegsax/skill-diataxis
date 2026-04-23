@@ -103,6 +103,6 @@ document (for cross-linking context) but only needs to write its assigned
 file. This scales well for large documentation projects.
 
 For the specific fields and their formats, see the
-[diataxis.toml Schema](../reference/diataxis-toml-schema/). To see the
+[diataxis.toml Schema](/reference/diataxis-toml-schema/). To see the
 structure document in action, try the
-[Writing diataxis.toml](../tutorials/writing-diataxis-toml/) tutorial.
+[Writing diataxis.toml](/tutorials/writing-diataxis-toml/) tutorial.

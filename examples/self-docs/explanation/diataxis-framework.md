@@ -77,6 +77,6 @@ Reference material is findable. Explanations provide depth without interrupting
 the flow of practical work.
 
 For the specific rules governing each quadrant, see the
-[Quadrant Rules](../reference/quadrant-rules/) reference. To see the
+[Quadrant Rules](/reference/quadrant-rules/) reference. To see the
 framework applied in practice, try the
-[Your First Project](../tutorials/first-project/) tutorial.
+[Your First Project](/tutorials/first-project/) tutorial.

@@ -99,4 +99,4 @@ quadrant_purity = { score = 4, justification = "..." }
 ```
 
 For how to run scoring and interpret results, see
-[How to Score and Revise](../howto/score-and-revise/).
+[How to Score and Revise](/howto/score-and-revise/).
