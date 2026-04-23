@@ -1,0 +1,19 @@
+[project]
+name = "Weight-arithmetic pass fixture"
+description = "Topic order and content weights agree."
+purpose = "Verify check-weight-arithmetic passes when the frontmatter weight equals topic.order * 10 + quadrant_weight."
+type = "learning-path"
+audience = "Test harness"
+
+[topics.basics]
+title = "Basics"
+description = "First topic."
+complexity = "beginner"
+order = 1
+
+[topics.basics.tutorials]
+file = "tutorials/foo.md"
+status = "draft"
+covers = ["A single placeholder concept"]
+detail = "Minimal fixture content."
+guidance = "Not for publication."

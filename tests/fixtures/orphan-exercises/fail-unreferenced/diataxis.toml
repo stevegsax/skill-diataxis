@@ -1,0 +1,20 @@
+[project]
+name = "Orphan-exercises fail fixture"
+description = "One on-disk notebook is not referenced by any tutorial."
+purpose = "Verifies check-orphan-exercises flags an unreferenced notebook."
+type = "learning-path"
+audience = "Test harness"
+
+[topics.basics]
+title = "Basics"
+description = "Basics topic used by the fixture."
+complexity = "beginner"
+order = 1
+
+[topics.basics.tutorials]
+file = "tutorials/foo.md"
+status = "draft"
+covers = ["A single placeholder concept"]
+detail = "Minimal fixture content."
+guidance = "Not for publication."
+exercises = ["exercises/foo.py"]

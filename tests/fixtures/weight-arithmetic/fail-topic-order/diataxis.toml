@@ -1,0 +1,19 @@
+[project]
+name = "Weight-arithmetic fail-topic-order fixture"
+description = "Topic order was bumped but the content file still carries the old weight."
+purpose = "Verify check-weight-arithmetic fails when diataxis.toml order changes without frontmatter update."
+type = "learning-path"
+audience = "Test harness"
+
+[topics.basics]
+title = "Basics"
+description = "First topic, but deliberately reordered to 3."
+complexity = "beginner"
+order = 3
+
+[topics.basics.tutorials]
+file = "tutorials/foo.md"
+status = "draft"
+covers = ["A single placeholder concept"]
+detail = "Minimal fixture content."
+guidance = "Not for publication."

@@ -1,0 +1,19 @@
+[project]
+name = "Weight-arithmetic fail-content-weight fixture"
+description = "Content-file frontmatter weight does not match topic order arithmetic."
+purpose = "Verify check-weight-arithmetic fails when the frontmatter weight drifts from topic.order * 10 + quadrant_weight."
+type = "learning-path"
+audience = "Test harness"
+
+[topics.basics]
+title = "Basics"
+description = "First topic."
+complexity = "beginner"
+order = 1
+
+[topics.basics.tutorials]
+file = "tutorials/foo.md"
+status = "draft"
+covers = ["A single placeholder concept"]
+detail = "Minimal fixture content."
+guidance = "Not for publication."

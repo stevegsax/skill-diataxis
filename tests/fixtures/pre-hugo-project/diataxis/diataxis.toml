@@ -1,0 +1,41 @@
+[project]
+name = "Upgrade Fixture"
+description = "Minimal pre-Hugo project used to exercise the upgrade script"
+purpose = "Exists solely to drive upgrade_to_hugo.py through the Examples-landing-page branch and the canonical pre-Hugo → Hugo migration."
+type = "learning-path"
+audience = "Test harness"
+
+[topics.basics]
+title = "Basics"
+description = "Fundamentals covered by the fixture"
+complexity = "beginner"
+order = 1
+
+[topics.basics.tutorials]
+file = "tutorials/first-tutorial.md"
+status = "draft"
+covers = ["A single concept, introduced with an exercise"]
+detail = "Minimal, just enough for the upgrade script to walk the file."
+guidance = "Not intended for publication — this exists to exercise upgrade_to_hugo.py."
+exercises = ["exercises/first-exercise.py"]
+
+[topics.basics.howto]
+file = "howto/do-the-basics.md"
+status = "draft"
+covers = ["A minimal how-to entry"]
+detail = "One paragraph."
+guidance = "Not intended for publication."
+
+[topics.basics.reference]
+file = "reference/basics-reference.md"
+status = "draft"
+covers = ["A minimal reference entry"]
+detail = "One paragraph."
+guidance = "Not intended for publication."
+
+[topics.basics.explanation]
+file = "explanation/why-basics.md"
+status = "draft"
+covers = ["A minimal explanation entry"]
+detail = "One paragraph."
+guidance = "Not intended for publication."
