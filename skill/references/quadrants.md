@@ -6,11 +6,11 @@ are scoring penalties.
 
 The four quadrants are presented in this order throughout the skill and the
 rendered site: **Explanation → Tutorials → How-to Guides → Reference**, with
-**Examples** appended as an optional fifth section when (and only when) the
-project ships marimo exercises. Explanation frames the subject before readers
+**Exercises** appended as an optional fifth section when (and only when) the
+project ships marimo notebooks. Explanation frames the subject before readers
 act on it; Tutorials and How-to Guides follow for readers ready to work;
 Reference is the lookup surface, last because it presupposes the reader
-already knows what to look up; Examples, when present, is a browsing aid
+already knows what to look up; Exercises, when present, is a browsing aid
 that surfaces the project's interactive notebooks independently of the
 tutorials they attach to.
 
@@ -20,7 +20,7 @@ tutorials they attach to.
 - [Tutorials](#tutorials)
 - [How-to Guides](#how-to-guides)
 - [Reference](#reference)
-- [Examples (optional)](#examples-optional)
+- [Exercises (optional)](#exercises-optional)
 - [Cross-referencing](#cross-referencing)
 - [The Compass](#the-compass)
 
@@ -197,7 +197,7 @@ result.
 
 ---
 
-## Examples (optional)
+## Exercises (optional)
 
 **Purpose**: A browsable index of the project's interactive notebooks.
 
@@ -207,14 +207,17 @@ after committing to a tutorial.
 **Analogy**: A gallery wall. Each piece is labeled, and the reader walks the
 room deciding which to stand in front of.
 
-The Examples section is the one piece of Diataxis this skill treats as
+The Exercises section is the one piece of Diataxis this skill treats as
 optional by construction. It exists only on projects that ship marimo
 notebooks under `exercises/`. Its landing page (`examples/_index.md`,
-`weight = 50`) is the whole section — there are no per-example markdown
-files. The reader clicks an entry and lands on the standalone WASM bundle
-at `/exercises/<stem>/`.
+`title = "Exercises"`, `weight = 50`) is the whole section — there are
+no per-exercise markdown files. The reader clicks an entry and lands on
+the standalone WASM bundle at `/exercises/<stem>/`. The source directory
+is named `examples/` to avoid colliding with the `exercises/*.py` tree
+that holds the notebook sources; the nav label the reader sees is
+"Exercises", matching the content type.
 
-### What the Examples landing page must do
+### What the Exercises landing page must do
 
 - List every marimo notebook in the project, organized by the topic each
   one belongs to (topics defined in `diataxis.toml`).
@@ -228,7 +231,7 @@ at `/exercises/<stem>/`.
 - Open with 2-4 sentences framing what the page is and how the notebooks
   work (client-side Pyodide, no server, no install).
 
-### What the Examples landing page must not do
+### What the Exercises landing page must not do
 
 - Duplicate the tutorial content. The matching tutorial is the
   authoritative teaching surface; the landing page is a signpost.

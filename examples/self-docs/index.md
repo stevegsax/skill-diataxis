@@ -14,3 +14,4 @@ Documentation that lives outside a structured workflow drifts: tutorials rot, re
 - [How-to Guides](howto/) — Accomplish specific tasks
 - [Reference](reference/) — Technical descriptions
 - [Explanation](explanation/) — Background and context
+- [Exercises](examples/) — Interactive notebooks you can run in your browser

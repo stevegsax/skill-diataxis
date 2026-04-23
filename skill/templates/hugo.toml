@@ -44,10 +44,15 @@ enableRobotsTXT = true
     source = "explanation"
     target = "content/explanation"
 
-  # The Examples section is optional: it appears only on projects that
-  # ship marimo exercises. The mount is always declared so projects can
-  # add exercises later without editing hugo.toml. An empty examples/
-  # directory (or one containing no _index.md) renders no section.
+  # The Exercises section is optional: it appears only on projects
+  # that ship marimo exercises. The mount is always declared so
+  # projects can add exercises later without editing hugo.toml. The
+  # source directory stays named `examples/` so it does not collide
+  # with the `exercises/` source tree that holds the `.py` notebook
+  # sources; the user-facing nav label the reader sees is "Exercises",
+  # coming from the `title` field in `examples/_index.md`. An empty
+  # `examples/` directory (or one containing no `_index.md`) renders
+  # no section.
   [[module.mounts]]
     source = "examples"
     target = "content/examples"

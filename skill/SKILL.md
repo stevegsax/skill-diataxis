@@ -28,46 +28,49 @@ Each quadrant serves a different user need and has strict rules about what belon
 in it. The power of Diataxis comes from keeping these quadrants distinct — content
 that bleeds across boundaries degrades the documentation.
 
-**A fifth, optional section — Examples — appears** when the project includes
-marimo exercises. It sits alongside the four quadrants as a *showcase* surface:
+**A fifth, optional section — Exercises — appears** when the project includes
+marimo notebooks. It sits alongside the four quadrants as a *showcase* surface:
 an index of the project's interactive notebooks, grouped so a reader can find
-them without first threading through the tutorials they attach to. Examples is
-conditional by design — a project with no marimo exercises has no Examples
-section, and the top-level nav correctly reflects that. See "Examples (optional
+them without first threading through the tutorials they attach to. Exercises is
+conditional by design — a project with no marimo notebooks has no Exercises
+section, and the top-level nav correctly reflects that. See "Exercises (optional
 fifth section)" below for the full rule.
 
 **Presentation order**: the published site presents the quadrants as
-**Explanation → Tutorials → How-to Guides → Reference**, with **Examples**
-appended at the end when the project has marimo exercises. Explanation comes
+**Explanation → Tutorials → How-to Guides → Reference**, with **Exercises**
+appended at the end when the project has marimo notebooks. Explanation comes
 first so readers encounter the conceptual framing before the mechanics.
 Tutorials and How-to guides follow for readers ready to act. Reference sits
-after them as the lookup surface. Examples, when present, comes last: it is
+after them as the lookup surface. Exercises, when present, comes last: it is
 a browsing aid for readers who want to see the thing working before or after
 committing to a tutorial. This ordering is enforced by the reviewer
 (`nu checks/run-checks.nu`) via `_index.md` section weights.
 
 Read `references/quadrants.md` for the detailed rules governing each quadrant
-type, including the Examples section.
+type, including the Exercises section.
 
-### Examples (optional fifth section)
+### Exercises (optional fifth section)
 
 When the project has any marimo notebooks under `exercises/`, create an
-`examples/_index.md` landing page with `weight = 50`. Its body is a short
-introduction plus a bulleted, topic-grouped list linking to every
-`/exercises/<stem>/` bundle in the project. Give each entry a one-line
-description drawn from the tutorial that owns it (its `covers` and
-`description`), so the landing page reads as an answer to "what can I play
-with here?" rather than a raw directory listing.
+`examples/_index.md` landing page with `title = "Exercises"` and
+`weight = 50`. Its body is a short introduction plus a bulleted,
+topic-grouped list linking to every `/exercises/<stem>/` bundle in the
+project. Give each entry a one-line description drawn from the tutorial
+that owns it (its `covers` and `description`), so the landing page reads
+as an answer to "what can I play with here?" rather than a raw directory
+listing. The source directory stays named `examples/` (to avoid colliding
+with the `exercises/*.py` source tree) while the nav label the reader
+sees is "Exercises", matching the content type.
 
 Two rules keep the section honest:
 
-- **Conditional existence.** No `exercises/*.py` files → no `examples/`
-  directory, no `_index.md`, no top-nav entry. The reviewer treats the
-  absence as correct in that case. This is why the Hugo mount for
-  `examples/` is always present in `hugo.toml` but the landing page is
-  not: an empty mounted directory does not render a section.
+- **Conditional existence.** No `exercises/*.py` files → no `_index.md`
+  under `examples/`, no top-nav entry. The reviewer treats the absence
+  as correct in that case. This is why the Hugo mount for `examples/`
+  is always present in `hugo.toml` but the landing page is not: an empty
+  mounted directory does not render a section.
 - **No separate per-example content files.** The marimo WASM bundles at
-  `/exercises/<stem>/` are the content. The Examples section is an index
+  `/exercises/<stem>/` are the content. The Exercises section is an index
   page, not a duplicate of the notebooks. Do not author
   `examples/<stem>.md` files — they would diverge from the notebooks and
   the tutorials, and the skill would have no way to keep all three in
@@ -291,7 +294,7 @@ work. If the code and the diataxis docs disagree, the code is right.
    config), and Hugo logs a warning if that mount points at a nonexistent
    source. An empty directory — with or without an `_index.md` inside —
    silences the warning and lets the presence of `_index.md` alone
-   control whether the Examples section renders. Adding the
+   control whether the Exercises section renders. Adding the
    `_index.md` itself is Step 3's job, gated on whether the project has
    any `exercises/*.py`.
 
@@ -328,6 +331,16 @@ It should link into the documentation (tutorials for getting started, explanatio
 for deeper understanding, reference for specifics) rather than providing detailed
 explanations itself. A reader should leave the introductory page knowing whether
 this project is relevant to them and where to go next.
+
+Include a `## Sections` list on the homepage that links to every top-level
+section: the four quadrant landing pages (`tutorials/`, `howto/`,
+`reference/`, `explanation/`) and — when the project has any
+`exercises/*.py` notebooks — the Exercises landing page (`examples/`).
+The homepage list mirrors the sidebar nav; omitting Exercises when
+notebooks exist leaves the main landing page out of sync with the
+sidebar and hides the gallery from readers who arrive via the home
+page. Use the same Hugo directory-form URLs as the sidebar
+(`tutorials/`, not `tutorials/_index.md`).
 
 **Parallel generation**: Because each file's requirements are fully specified in
 the structure document, files can be generated independently and in parallel.
@@ -421,7 +434,7 @@ specific file. Create one per quadrant with this exact shape:
 - Frontmatter with `title`, `description`, and a fixed `weight` that pins the
   section order: **explanation = 10, tutorials = 20, howto = 30,
   reference = 40**, plus **examples = 50** on projects that have marimo
-  exercises (see "Examples landing page" below). These weights match the
+  exercises (see "Exercises landing page" below). These weights match the
   presentation order the skill requires; the reviewer fails if any are
   missing or out of order.
 - A short introductory paragraph (2-4 sentences) explaining what this
@@ -456,13 +469,13 @@ not to accomplish a task.
 When a content file is added, removed, or renamed, update the corresponding
 quadrant `_index.md` in the same change so the link list does not drift.
 
-**Examples landing page**: When the project has any marimo notebooks under
+**Exercises landing page**: When the project has any marimo notebooks under
 `exercises/`, author `examples/_index.md` so the fifth top-level section
 appears in the nav. Skip this file entirely when no exercises exist —
 adding it to an exerciseless project creates a phantom section that
 disappoints the reader who clicks into it. Shape:
 
-- Frontmatter with `title = "Examples"`, `weight = 50`, and a
+- Frontmatter with `title = "Exercises"`, `weight = 50`, and a
   `description` explaining the section in one line. No `type` override —
   the landing page is a normal content page, not a leaf bundle.
 - A short introductory paragraph (2-4 sentences) framing what the section
@@ -483,7 +496,7 @@ Example skeleton, for a project whose exercises cover two topics:
 
 ```markdown
 +++
-title = "Examples"
+title = "Exercises"
 weight = 50
 description = "Interactive notebooks you can run in your browser."
 +++
@@ -515,7 +528,7 @@ to each exercise's standalone page (`/exercises/<stem>/`). The exercise stem
 is the file name without the `.py` extension. These bundles are produced by
 `make exercises` and served as standalone pages with their own look and feel.
 Both authoring paths are deliberate: inline links keep the exercise adjacent
-to the tutorial that sets it up, while the Examples landing page (above)
+to the tutorial that sets it up, while the Exercises landing page (above)
 gives readers a project-wide index that does not require picking the right
 tutorial first.
 
@@ -748,7 +761,8 @@ project-root/
     │   └── fraction-operations.md
     ├── explanation/
     │   └── why-fractions-work.md
-    ├── examples/                  # Optional: appears only if exercises exist
+    ├── examples/                  # Hugo section dir for the Exercises nav entry;
+    │   │                          # optional — appears only if exercises exist
     │   └── _index.md              # Landing page indexing all marimo notebooks
     ├── exercises/
     │   └── basic-ops.py           # marimo notebook

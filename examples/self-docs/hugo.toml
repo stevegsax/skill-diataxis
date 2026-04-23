@@ -43,6 +43,15 @@ enableRobotsTXT = true
     source = "explanation"
     target = "content/explanation"
 
+  # The Exercises section is optional: it appears only on projects
+  # that ship marimo notebooks. The mount is always declared so
+  # projects can add notebooks later without editing this file. An
+  # empty examples/ directory (or one without _index.md) renders no
+  # section.
+  [[module.mounts]]
+    source = "examples"
+    target = "content/examples"
+
   # Mount the authored homepage.
   [[module.mounts]]
     source = "index.md"

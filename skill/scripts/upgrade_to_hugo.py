@@ -37,11 +37,14 @@ This script performs the mechanical part of the migration:
      with the canonical section weight (explanation=10, tutorials=20,
      howto=30, reference=40), a short introduction, and a bulleted list
      of links to every content file in that quadrant ordered by weight.
-  8. Creates `examples/_index.md` (weight 50) when the project has any
-     `exercises/*.py`. The page groups every notebook by the topic of
-     the tutorial that owns it and links each to `/exercises/<stem>/`.
-     On projects with no exercises the file is deliberately not created,
-     so the Examples nav entry does not appear.
+  8. Creates `examples/_index.md` (title "Exercises", weight 50) when
+     the project has any `exercises/*.py`. The page groups every
+     notebook by the topic of the tutorial that owns it and links each
+     to `/exercises/<stem>/`. On projects with no exercises the file is
+     deliberately not created, so the Exercises nav entry does not
+     appear. The source directory stays named `examples/` to avoid
+     colliding with the `exercises/*.py` tree that holds the notebook
+     sources.
   9. Rewrites math delimiters: `$...$` → `\(...\)` and `$$...$$` →
      `\[...\]`. The dollar-sign form is what the pre-Hugo diataxis
      pipeline and most other static-site generators use; the skill
@@ -123,14 +126,17 @@ QUADRANT_INTROS = {
     ),
 }
 
-# The Examples section is the optional fifth top-level section. It is
+# The Exercises section is the optional fifth top-level section. It is
 # not part of QUADRANT_WEIGHTS because it has no per-topic content
 # files — the notebooks are the content, and they live under
 # `exercises/` and ship as `/exercises/<stem>/` bundles. These
-# constants drive only the landing page.
-EXAMPLES_SECTION_WEIGHT = 50
-EXAMPLES_LABEL = "Examples"
-EXAMPLES_INTRO = (
+# constants drive only the landing page. The source directory for the
+# landing page is `examples/` (not `exercises/`) because the latter
+# already holds the `.py` notebook sources; the user-facing title is
+# "Exercises", matching the content type.
+EXERCISES_SECTION_WEIGHT = 50
+EXERCISES_LABEL = "Exercises"
+EXERCISES_INTRO = (
     "Every notebook below runs in your browser via Pyodide — no "
     "install, no server. Click an entry to play with the concept; the "
     "matching tutorial walks through what it teaches and when to reach "
@@ -218,7 +224,7 @@ def detect_pre_hugo(diataxis_dir: Path) -> dict:
     if index_md.exists() and not index_md.read_text().startswith("+++"):
         report["homepage_without_frontmatter"] = "index.md"
 
-    # The Examples section is conditional: it belongs only on projects
+    # The Exercises section is conditional: it belongs only on projects
     # that ship marimo exercises. If `.py` files exist under
     # `exercises/` and `examples/_index.md` does not, the upgrade has
     # work to do; the inverse case — a stray landing page on a
@@ -722,11 +728,11 @@ def ensure_examples_landing(diataxis_dir: Path, structure: dict) -> bool:
 
     lines = [
         "+++",
-        f'title = "{EXAMPLES_LABEL}"',
-        f"weight = {EXAMPLES_SECTION_WEIGHT}",
-        f'description = "{EXAMPLES_LABEL} — interactive notebooks you can run in your browser."',
+        f'title = "{EXERCISES_LABEL}"',
+        f"weight = {EXERCISES_SECTION_WEIGHT}",
+        f'description = "{EXERCISES_LABEL} — interactive notebooks you can run in your browser."',
         "+++",
-        EXAMPLES_INTRO,
+        EXERCISES_INTRO,
         "",
     ]
     for key in sorted(buckets):

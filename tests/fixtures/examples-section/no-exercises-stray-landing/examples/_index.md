@@ -1,5 +1,5 @@
 +++
-title = "Examples"
+title = "Exercises"
 weight = 50
 description = "Interactive notebooks you can run in your browser."
 +++
