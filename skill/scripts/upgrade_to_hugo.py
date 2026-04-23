@@ -37,7 +37,12 @@ This script performs the mechanical part of the migration:
      with the canonical section weight (explanation=10, tutorials=20,
      howto=30, reference=40), a short introduction, and a bulleted list
      of links to every content file in that quadrant ordered by weight.
-  8. Rewrites math delimiters: `$...$` → `\(...\)` and `$$...$$` →
+  8. Creates `examples/_index.md` (weight 50) when the project has any
+     `exercises/*.py`. The page groups every notebook by the topic of
+     the tutorial that owns it and links each to `/exercises/<stem>/`.
+     On projects with no exercises the file is deliberately not created,
+     so the Examples nav entry does not appear.
+  9. Rewrites math delimiters: `$...$` → `\(...\)` and `$$...$$` →
      `\[...\]`. The dollar-sign form is what the pre-Hugo diataxis
      pipeline and most other static-site generators use; the skill
      canonicalizes on the LaTeX form. Code blocks (fenced and inline)
@@ -117,6 +122,20 @@ QUADRANT_INTROS = {
         "information."
     ),
 }
+
+# The Examples section is the optional fifth top-level section. It is
+# not part of QUADRANT_WEIGHTS because it has no per-topic content
+# files — the notebooks are the content, and they live under
+# `exercises/` and ship as `/exercises/<stem>/` bundles. These
+# constants drive only the landing page.
+EXAMPLES_SECTION_WEIGHT = 50
+EXAMPLES_LABEL = "Examples"
+EXAMPLES_INTRO = (
+    "Every notebook below runs in your browser via Pyodide — no "
+    "install, no server. Click an entry to play with the concept; the "
+    "matching tutorial walks through what it teaches and when to reach "
+    "for it."
+)
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
 
@@ -198,6 +217,18 @@ def detect_pre_hugo(diataxis_dir: Path) -> dict:
     index_md = diataxis_dir / "index.md"
     if index_md.exists() and not index_md.read_text().startswith("+++"):
         report["homepage_without_frontmatter"] = "index.md"
+
+    # The Examples section is conditional: it belongs only on projects
+    # that ship marimo exercises. If `.py` files exist under
+    # `exercises/` and `examples/_index.md` does not, the upgrade has
+    # work to do; the inverse case — a stray landing page on a
+    # project with no exercises — is reported by `check-quadrant-order`
+    # rather than the upgrade, since the fix there is to delete a file
+    # rather than create one.
+    exercises_dir = diataxis_dir / "exercises"
+    has_exercises = exercises_dir.is_dir() and any(exercises_dir.glob("*.py"))
+    if has_exercises and not (diataxis_dir / "examples" / "_index.md").exists():
+        report["missing_examples_landing"] = "examples/_index.md"
 
     # Files that use `$...$` / `$$...$$` for math — the inheritance from
     # TeX that most non-Hugo static-site generators share. The skill's
@@ -599,6 +630,118 @@ def ensure_quadrant_landing(diataxis_dir: Path, structure: dict, quadrant: str) 
     return True
 
 
+def _exercise_files(entry: dict) -> list[str]:
+    """Return the exercise file paths referenced by a tutorial entry.
+
+    `diataxis.toml` accepts two forms in `exercises`: a bare path string
+    or a table ``{ file = "...", title = "...", height = N }``. The
+    landing page only needs the file path, so we normalize both forms.
+    """
+    raw = entry.get("exercises") or []
+    out: list[str] = []
+    for item in raw:
+        if isinstance(item, str):
+            out.append(item)
+        elif isinstance(item, dict) and "file" in item:
+            out.append(item["file"])
+    return out
+
+
+def ensure_examples_landing(diataxis_dir: Path, structure: dict) -> bool:
+    """Create ``examples/_index.md`` when the project has exercises.
+
+    The landing page lists every marimo notebook under ``exercises/``,
+    grouped by the topic of the tutorial that owns it, with a link to
+    the ``/exercises/<stem>/`` WASM bundle. Notebooks that exist on
+    disk but are not referenced from any tutorial's `exercises` list
+    are grouped under an "Other examples" heading so nothing drops on
+    the floor.
+
+    Idempotent: if the file already exists, leave it alone. No-op when
+    the project has no `.py` files in `exercises/`.
+    """
+    exercises_dir = diataxis_dir / "exercises"
+    if not exercises_dir.is_dir():
+        return False
+    notebooks = sorted(exercises_dir.glob("*.py"))
+    if not notebooks:
+        return False
+
+    examples_dir = diataxis_dir / "examples"
+    examples_dir.mkdir(exist_ok=True)
+    index_path = examples_dir / "_index.md"
+    if index_path.exists():
+        return False
+
+    # Map each exercise stem to the tutorial that owns it so the landing
+    # page can group entries by topic and label each link with a title
+    # and description pulled from the tutorial's `diataxis.toml` entry.
+    owned: dict[str, tuple[int, int, str, str, str]] = {}
+    for topic_slug, topic in (structure.get("topics") or {}).items():
+        tut = topic.get("tutorials")
+        if not tut:
+            continue
+        topic_order = topic.get("order") or 0
+        topic_title = topic.get("title") or topic_slug
+        topic_desc = topic.get("description") or ""
+        tut_weight = topic_order * 10 + QUADRANT_WEIGHTS["tutorials"]
+        tut_file = tut.get("file")
+        tut_title = (
+            read_title(diataxis_dir / tut_file)
+            if tut_file
+            else title_from_filename(Path(topic_slug))
+        )
+        for ex in _exercise_files(tut):
+            stem = Path(ex).stem
+            owned[stem] = (
+                topic_order,
+                tut_weight,
+                topic_title,
+                tut_title,
+                topic_desc,
+            )
+
+    # Group entries by topic, preserving topic order. Un-owned notebooks
+    # land in a bucket with a sentinel topic order just past the last
+    # real one so they sort after the owned groups.
+    buckets: dict[tuple[int, str], list[tuple[int, str, str, str]]] = {}
+    for nb in notebooks:
+        stem = nb.stem
+        meta = owned.get(stem)
+        if meta is not None:
+            topic_order, tut_weight, topic_title, tut_title, topic_desc = meta
+            key = (topic_order, topic_title)
+            buckets.setdefault(key, []).append(
+                (tut_weight, stem, tut_title, topic_desc)
+            )
+        else:
+            key = (10_000, "Other examples")
+            buckets.setdefault(key, []).append(
+                (0, stem, title_from_filename(nb), "")
+            )
+
+    lines = [
+        "+++",
+        f'title = "{EXAMPLES_LABEL}"',
+        f"weight = {EXAMPLES_SECTION_WEIGHT}",
+        f'description = "{EXAMPLES_LABEL} — interactive notebooks you can run in your browser."',
+        "+++",
+        EXAMPLES_INTRO,
+        "",
+    ]
+    for key in sorted(buckets):
+        _, heading = key
+        lines.append(f"### {heading}")
+        lines.append("")
+        for _, stem, title, desc in sorted(buckets[key]):
+            suffix = f" — {desc}" if desc else ""
+            lines.append(f"- [{title}](/exercises/{stem}/){suffix}")
+        lines.append("")
+
+    index_path.write_text("\n".join(lines).rstrip() + "\n")
+    return True
+
+
 def scaffold_config(diataxis_dir: Path, structure: dict) -> list[str]:
     project = structure.get("project") or {}
     name = project.get("name") or diataxis_dir.name
@@ -690,6 +833,9 @@ def run_upgrade(diataxis_dir: Path) -> dict:
     for quadrant in QUADRANT_WEIGHTS:
         if ensure_quadrant_landing(diataxis_dir, structure, quadrant):
             changes.append(f"created {quadrant}/_index.md")
+
+    if ensure_examples_landing(diataxis_dir, structure):
+        changes.append("created examples/_index.md")
 
     return {
         "changes": changes,

@@ -5,10 +5,14 @@ for generating content and for scoring adherence. Violations of these rules
 are scoring penalties.
 
 The four quadrants are presented in this order throughout the skill and the
-rendered site: **Explanation → Tutorials → How-to Guides → Reference**.
-Explanation frames the subject before readers act on it; Tutorials and How-to
-Guides follow for readers ready to work; Reference is the lookup surface,
-last because it presupposes the reader already knows what to look up.
+rendered site: **Explanation → Tutorials → How-to Guides → Reference**, with
+**Examples** appended as an optional fifth section when (and only when) the
+project ships marimo exercises. Explanation frames the subject before readers
+act on it; Tutorials and How-to Guides follow for readers ready to work;
+Reference is the lookup surface, last because it presupposes the reader
+already knows what to look up; Examples, when present, is a browsing aid
+that surfaces the project's interactive notebooks independently of the
+tutorials they attach to.
 
 ## Table of Contents
 
@@ -16,6 +20,7 @@ last because it presupposes the reader already knows what to look up.
 - [Tutorials](#tutorials)
 - [How-to Guides](#how-to-guides)
 - [Reference](#reference)
+- [Examples (optional)](#examples-optional)
 - [Cross-referencing](#cross-referencing)
 - [The Compass](#the-compass)
 
@@ -189,6 +194,68 @@ result.
 - Tables for structured data (parameters, options, properties)
 - Examples are short (1-3 lines) and illustrative, not instructional
 - Link to How-to for "how do I use this" questions
+
+---
+
+## Examples (optional)
+
+**Purpose**: A browsable index of the project's interactive notebooks.
+
+**Serves**: Discovery — letting a reader *see the thing working* before or
+after committing to a tutorial.
+
+**Analogy**: A gallery wall. Each piece is labeled, and the reader walks the
+room deciding which to stand in front of.
+
+The Examples section is the one piece of Diataxis this skill treats as
+optional by construction. It exists only on projects that ship marimo
+notebooks under `exercises/`. Its landing page (`examples/_index.md`,
+`weight = 50`) is the whole section — there are no per-example markdown
+files. The reader clicks an entry and lands on the standalone WASM bundle
+at `/exercises/<stem>/`.
+
+### What the Examples landing page must do
+
+- List every marimo notebook in the project, organized by the topic each
+  one belongs to (topics defined in `diataxis.toml`).
+- Link each entry to `/exercises/<stem>/` using absolute URLs (the
+  source file lives at `examples/_index.md` and relative forms are
+  brittle from there).
+- Give each entry a one-line description of what the reader will *do* in
+  the notebook — not what the tutorial as a whole teaches. The reader
+  came to this page to find something to play with, so describe the
+  play, not the pedagogy.
+- Open with 2-4 sentences framing what the page is and how the notebooks
+  work (client-side Pyodide, no server, no install).
+
+### What the Examples landing page must not do
+
+- Duplicate the tutorial content. The matching tutorial is the
+  authoritative teaching surface; the landing page is a signpost.
+- Teach. A reader who wants to learn goes to the tutorial via its own
+  nav entry or via the link on each example.
+- Contain per-example `.md` files alongside `_index.md`. Every such
+  file is a maintenance drag: the notebook, the tutorial, and the
+  per-example page would need to stay in sync, and the skill has no
+  mechanism for that.
+- Exist on a project with no marimo notebooks. An empty gallery wall is
+  a worse experience than no wall at all.
+
+### Language patterns
+
+- "Each notebook below runs in your browser — no install, no server."
+- "Play with <concept> interactively."
+- "Pair this with [<tutorial title>](/tutorials/<slug>/) for the full
+  walkthrough."
+
+### Structural rules
+
+- One `### <Topic Title>` heading per topic, in topic `order`.
+- Within a topic, order exercises by the owning tutorial's `weight`, then
+  by file name.
+- Each list item is `- [<tutorial title>](/exercises/<stem>/) —
+  <one-line description>`.
+- Regenerate the page whenever any tutorial's `exercises` list changes.
 
 ---
 

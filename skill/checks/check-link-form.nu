@@ -27,7 +27,13 @@
 
 use mod.nu [make-result make-evidence]
 
-const QUADRANTS = [tutorials howto reference explanation]
+# Include `examples` so cross-section links into the optional fifth
+# section get the same pretty-URL lint. `examples/` holds no content
+# files of its own — only `_index.md` — so iterating it yields nothing,
+# but content files in the other four sections are still scanned for
+# links of the form `](../examples/…)`, which are the wrong shape for
+# Hugo pretty URLs from two levels deep.
+const QUADRANTS = [tutorials howto reference explanation examples]
 
 # Tag each line with whether it lies inside a fenced code block. The
 # fence line itself is tagged "in code" so the opening/closing ``` is

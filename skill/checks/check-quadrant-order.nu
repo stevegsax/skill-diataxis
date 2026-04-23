@@ -2,24 +2,34 @@
 # Check that each quadrant has an _index.md section landing page with:
 #   1. TOML frontmatter carrying the canonical weight that pins the
 #      presentation order (explanation=10, tutorials=20, howto=30,
-#      reference=40)
+#      reference=40, examples=50)
 #   2. A `title` in frontmatter
 #   3. At least one paragraph of introductory prose before the first list
 #   4. A bulleted list of links to sibling content files in the same
 #      directory
 #
 # The weights are the enforcement mechanism: Hugo orders top-level sections
-# by the weight of their `_index.md`, so these four numbers determine the
+# by the weight of their `_index.md`, so these numbers determine the
 # published order. Drift here produces a published site whose ordering does
 # not match the skill's documented conventions.
+#
+# `examples` is a conditional fifth section: it is required iff the
+# project ships marimo notebooks under `exercises/`. When no such files
+# exist, the absence of `examples/_index.md` is correct; when they do,
+# the landing page must be present with weight 50. A stray
+# `examples/_index.md` on a project with no `.py` exercises is also
+# flagged, because it publishes a section the reader cannot act on.
 use mod.nu [make-result make-evidence content-files]
 
-# Canonical weight for each quadrant, in presentation order.
+# Canonical weight for each quadrant, in presentation order. `examples`
+# is marked `conditional = true`: required iff the project has any
+# `exercises/*.py` files, not required otherwise.
 const QUADRANT_WEIGHTS = [
-    {quadrant: explanation, weight: 10}
-    {quadrant: tutorials,   weight: 20}
-    {quadrant: howto,       weight: 30}
-    {quadrant: reference,   weight: 40}
+    {quadrant: explanation, weight: 10, conditional: false}
+    {quadrant: tutorials,   weight: 20, conditional: false}
+    {quadrant: howto,       weight: 30, conditional: false}
+    {quadrant: reference,   weight: 40, conditional: false}
+    {quadrant: examples,    weight: 50, conditional: true}
 ]
 
 # Parse TOML frontmatter from a markdown file. Returns a record with the
@@ -57,12 +67,33 @@ def has-intro-paragraph [body: string]: nothing -> bool {
 }
 
 def main [diataxis_dir: string] {
+    # Examples is required iff the project has marimo exercises. We
+    # check for `.py` files directly (not `diataxis.toml` exercise
+    # entries) because the on-disk notebooks are what the Hugo build
+    # will actually expose as `/exercises/<stem>/`; the structure
+    # document can lag reality during authoring.
+    let exercises_dir = ($diataxis_dir | path join "exercises")
+    let has_exercises = if ($exercises_dir | path exists) {
+        (glob ($exercises_dir | path join "*.py") | length) > 0
+    } else { false }
+
     let issues = ($QUADRANT_WEIGHTS | each {|entry|
         let index_path = ($diataxis_dir | path join $entry.quadrant | path join "_index.md")
         let rel = ($entry.quadrant + "/_index.md")
+        let required = (not $entry.conditional) or $has_exercises
 
         if not ($index_path | path exists) {
-            [{file: $rel, detail: $"missing _index.md for quadrant '($entry.quadrant)'", suggestion: $"Create ($rel) with weight=($entry.weight), an introduction, and a bulleted list of links to content files"}]
+            if $required {
+                [{file: $rel, detail: $"missing _index.md for quadrant '($entry.quadrant)'", suggestion: $"Create ($rel) with weight=($entry.weight), an introduction, and a bulleted list of links to content files"}]
+            } else {
+                # Conditional section that is correctly absent — no issue.
+                []
+            }
+        } else if $entry.conditional and not $has_exercises {
+            # Conditional landing page present on a project with no
+            # marimo exercises. It publishes a section whose links
+            # cannot exist; flag for removal rather than patching.
+            [{file: $rel, detail: $"($entry.quadrant)/_index.md exists but the project has no exercises/*.py notebooks to index", suggestion: $"Remove ($rel) — the Examples section only belongs on projects that ship marimo exercises"}]
         } else {
             let parsed = (parse-frontmatter $index_path)
             mut problems = []
@@ -90,41 +121,67 @@ def main [diataxis_dir: string] {
             }
 
             let content = (content-files ($diataxis_dir | path join $entry.quadrant))
-            if ($content | length) > 0 and not (has-link-list $body) {
-                $problems = ($problems | append {file: $rel, detail: "content files exist but _index.md has no bulleted list of links", suggestion: $"Add a bulleted list linking to every content file in ($entry.quadrant)/"})
+            # The Examples section is unusual: its linked destinations
+            # are `/exercises/<stem>/` WASM bundles outside the
+            # `examples/` directory, so `content-files` reports zero.
+            # Require a link list anyway when the landing page exists
+            # on a project with exercises — that is exactly the case
+            # where a list is the landing page's whole point.
+            let needs_link_list = (($content | length) > 0) or ($entry.quadrant == "examples" and $has_exercises)
+            if $needs_link_list and not (has-link-list $body) {
+                let suggestion = if $entry.quadrant == "examples" {
+                    "Add a bulleted list linking to every /exercises/<stem>/ bundle, grouped by the tutorial that owns it"
+                } else {
+                    $"Add a bulleted list linking to every content file in ($entry.quadrant)/"
+                }
+                $problems = ($problems | append {file: $rel, detail: "landing page has no bulleted list of links", suggestion: $suggestion})
             }
 
             $problems
         }
     } | flatten)
 
-    # Also verify the relative ordering is strictly increasing if all four
-    # weights are present. If any _index.md is missing or has a bad weight,
-    # the issues above already flag it, so we only emit an ordering issue
-    # when every file parses cleanly but the weights are out of order.
-    let parsed_weights = ($QUADRANT_WEIGHTS | each {|entry|
-        let index_path = ($diataxis_dir | path join $entry.quadrant | path join "_index.md")
-        if ($index_path | path exists) {
-            let fm = (parse-frontmatter $index_path).frontmatter
-            if $fm != null {
-                {quadrant: $entry.quadrant, weight: ($fm | get -o weight)}
+    # Verify the relative ordering is strictly increasing across every
+    # landing page that is expected to exist. On projects without
+    # exercises, that is the four canonical quadrants; on projects with
+    # exercises, it is those four plus examples. If any required
+    # _index.md is missing or has a bad weight, the issues above already
+    # flag it, so we only emit an ordering issue when every expected
+    # file parses cleanly but the weights are out of order.
+    let expected_quadrants = ($QUADRANT_WEIGHTS | where {|e| (not $e.conditional) or $has_exercises } | get quadrant)
+
+    let parsed_weights = ($QUADRANT_WEIGHTS
+        | where {|e| $e.quadrant in $expected_quadrants }
+        | each {|entry|
+            let index_path = ($diataxis_dir | path join $entry.quadrant | path join "_index.md")
+            if ($index_path | path exists) {
+                let fm = (parse-frontmatter $index_path).frontmatter
+                if $fm != null {
+                    {quadrant: $entry.quadrant, weight: ($fm | get -o weight)}
+                }
             }
         }
-    } | where {|r| $r != null and $r.weight != null})
+        | where {|r| $r != null and $r.weight != null})
 
-    let order_issues = if ($parsed_weights | length) == 4 {
-        let expected_order = ($QUADRANT_WEIGHTS | get quadrant)
+    let order_issues = if ($parsed_weights | length) == ($expected_quadrants | length) {
+        let expected_order = $expected_quadrants
         let actual_order = ($parsed_weights | sort-by weight | get quadrant)
         if $actual_order != $expected_order {
-            [{file: "explanation/_index.md, tutorials/_index.md, howto/_index.md, reference/_index.md", detail: $"section weights sort to ($actual_order | str join ' -> '), expected ($expected_order | str join ' -> ')", suggestion: "Adjust weights so the sections render as Explanation -> Tutorials -> How-to -> Reference"}]
+            let file_list = ($expected_quadrants | each {|q| $q + "/_index.md"} | str join ", ")
+            [{file: $file_list, detail: $"section weights sort to ($actual_order | str join ' -> '), expected ($expected_order | str join ' -> ')", suggestion: $"Adjust weights so the sections render as ($expected_order | str join ' -> ')"}]
         } else { [] }
     } else { [] }
 
     let all_issues = ($issues | append $order_issues)
 
     if ($all_issues | length) == 0 {
+        let pass_detail = if $has_exercises {
+            "all five sections have _index.md landing pages with canonical weights (explanation=10, tutorials=20, howto=30, reference=40, examples=50), an introduction, and a link list"
+        } else {
+            "all four quadrants have _index.md landing pages with canonical weights (explanation=10, tutorials=20, howto=30, reference=40), an introduction, and a link list; the optional Examples section is correctly absent (no exercises/*.py in the project)"
+        }
         make-result "check-quadrant-order" "pass" [
-            (make-evidence "diataxis.toml" "all four quadrants have _index.md landing pages with canonical weights (explanation=10, tutorials=20, howto=30, reference=40), an introduction, and a link list")
+            (make-evidence "diataxis.toml" $pass_detail)
         ] [] | to json
     } else {
         let evidence = ($all_issues | each {|p| make-evidence $p.file $p.detail})

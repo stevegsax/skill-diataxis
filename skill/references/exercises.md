@@ -8,6 +8,21 @@ exercises and ships without the notebooks is incomplete in exactly
 the way a tutorial that lists steps and then ships without any of
 them is incomplete.
 
+Every notebook the project ships shows up in two places in the
+published site: inline on the tutorial page that owns it (via the
+`## Exercises` section appended during content generation) and on
+the Examples landing page (`examples/_index.md`, `weight = 50`), which
+becomes the fifth top-level nav section whenever the project has any
+`exercises/*.py`. The Examples page is a project-wide index — grouped
+by topic, with a one-line description per entry — so a reader can
+discover a notebook without knowing which tutorial owns it. Keep it
+regenerated in the same change whenever you add, remove, or rename an
+`exercises` entry anywhere in `diataxis.toml`. When the project has
+no notebooks, the Examples section does not exist, and that is
+correct — see `SKILL.md` "Examples (optional fifth section)" for the
+authoring rule and `references/quadrants.md` "Examples (optional)"
+for what the page must and must not do.
+
 The check suite enforces this two ways: `check-exercise-exists` fails
 if the `.py` file is missing, and `check-exercise-content` fails if
 the file is a placeholder stub (only one cell, `# TODO` markers, or a

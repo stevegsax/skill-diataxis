@@ -44,6 +44,14 @@ enableRobotsTXT = true
     source = "explanation"
     target = "content/explanation"
 
+  # The Examples section is optional: it appears only on projects that
+  # ship marimo exercises. The mount is always declared so projects can
+  # add exercises later without editing hugo.toml. An empty examples/
+  # directory (or one containing no _index.md) renders no section.
+  [[module.mounts]]
+    source = "examples"
+    target = "content/examples"
+
   # Mount the authored homepage.
   [[module.mounts]]
     source = "index.md"
