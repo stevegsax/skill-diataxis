@@ -566,9 +566,34 @@ before the task is done.
 
 Read `references/exercises.md` for the shape of a real exercise — at
 minimum, a setup cell plus a UI cell plus a response cell that reads
-the UI's value and renders something based on it. The deterministic
-checks `check-exercise-exists` and `check-exercise-content` enforce
-existence and non-placeholder content; both run during scoring.
+the UI's value and renders something based on it. That reference also
+catalogs the marimo `mo.ui.*` API drift gotchas the skill has been
+bitten by (e.g. `slider` uses `stop=`, not `end=`; dict-options
+widgets return the mapped value from `.value`, not the key) and
+explains the cell-private underscore-prefix rule. **Before using any
+`mo.ui.*` widget that is not already demonstrated by the template,
+fetch the current signature from `https://docs.marimo.io/api/`** —
+marimo is pre-1.0 and trains drift across minor versions, so an
+older remembered signature is a likely source of silent
+browser-time failures.
+
+Five deterministic checks cover exercises, and all run on every
+score pass:
+
+- `check-exercise-exists` — the listed `.py` file is on disk.
+- `check-exercise-content` — more than one cell, no `# TODO`/`pass`
+  stubs.
+- `check-marimo-ast` — the notebook parses as valid Python.
+- `check-marimo-cell-collisions` — no non-underscore name is
+  assigned at the top level of more than one `@app.cell`
+  (collisions pass export but break in the browser).
+- `check-marimo-value-compare` — `.value == <literal>` comparisons
+  on dict-options widgets are tested against the mapped value, not
+  the key (the reverse silently evaluates to False).
+
+All five have a deterministic remediation: write the exercise
+correctly per `references/exercises.md`. Treat a failure as a fix
+to make, not a decision to surface to the user.
 
 The Makefile exports each notebook to a self-contained WASM HTML
 bundle (via `marimo export html-wasm`) at

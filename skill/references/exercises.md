@@ -59,14 +59,92 @@ in a DAG. A cell's parameters name the cells whose returned values it
 depends on, and its `return` tuple names the values other cells can
 depend on. A few practical consequences:
 
-- **Every `mo.ui.*` binding must be returned** so response cells can
-  read `.value` off it.
-- **Top-level names are module-scoped across all cells**, so no two
-  cells can assign to the same name. Rename local variables per cell
-  (`step_1_result`, `step_2_result` rather than a shared `result`).
+- **Every `mo.ui.*` binding a later cell reads must be returned** so
+  response cells can read `.value` off it.
+- **Top-level names are module-scoped across all cells.** Marimo
+  enforces one definition per global name across the whole notebook,
+  and a collision surfaces in the browser as "This cell wasn't run
+  because it redefines variables from other cells." It does *not*
+  show up during `marimo export html-wasm`, which is why the check
+  suite includes an AST pass — see "The cell-collision trap" below.
+- **Prefix cell-local names with `_`** (e.g. `_tmp`, `_row`,
+  `_needed`) for any value that only the current cell uses. Marimo
+  treats underscore-prefixed names as cell-private, so they do not
+  collide across cells and, importantly, **they must not appear in
+  the cell's `return (...)` tuple** — a cell cannot export a
+  private name. The only names that belong in `return (...)` are
+  cross-cell dependencies: the UI widget a response cell reads, a
+  DataFrame another cell filters, the `mo` module itself.
 - **Imports live in the setup cell** and are returned from it so other
   cells can parameterize on them. Marimo will not lift module-level
   imports into every cell's scope automatically.
+
+### The cell-collision trap
+
+Names like `table`, `result`, `needed`, `total`, `r`, `df`, `fig`, and
+`out` are the usual offenders — an author writes a cell that computes
+`result` and returns it, and the next cell also computes `result` for
+its own purposes, and nothing complains at generation time. The
+`marimo export html-wasm` step is a pure code emitter: it serializes
+the cells, it does not evaluate the DAG. The collision only trips when
+a browser loads the exported bundle and marimo's runtime actually
+wires the graph.
+
+The rule that prevents this: **before a name goes into a cell's
+`return (...)`, ask whether another cell actually consumes it.** If
+nothing else reads it, rename it with a leading underscore and remove
+it from the return tuple. Keeping `return (needed,)` "just in case"
+is precisely how collisions are born. A short-lived local should stay
+local.
+
+The `check-marimo-cell-collisions` check runs on every score pass and
+flags any non-underscore name assigned at the top level of more than
+one `@app.cell` body. A failure names the offending cells and
+variable; the fix is always the same shape (underscore-prefix the
+cell-local occurrences and drop them from `return`).
+
+## Marimo API drift and how to stay ahead of it
+
+Marimo is pre-1.0 and the `mo.ui.*` constructors break compatibility
+between minor versions. Two consequences for this skill:
+
+1. **Check `https://docs.marimo.io/api/` before using any `mo.ui.*`
+   widget the notebook does not already demonstrate.** Training-data
+   snapshots of marimo APIs drift out of date fast. One WebFetch of
+   the widget's page (e.g. `/api/inputs/slider/`,
+   `/api/inputs/dropdown/`) is cheap and catches parameter renames
+   before they become a broken exported bundle. Do this *every*
+   time you author a new exercise, not just the first one — the
+   drift catalog below gets longer with each marimo release.
+2. **The WASM export silently accepts stale parameter names** when
+   they are passed by position, and silently accepts nonexistent
+   kwargs on some widgets up to the point the browser tries to
+   render them. In both cases the error only surfaces after the
+   user clicks into the exercise. Treat the published site, not
+   the export step, as ground truth for whether the API call is
+   current.
+
+Known drift the skill has been bitten by — audit new exercises for
+each one:
+
+- **`mo.ui.slider`**: the maximum bound is `stop=`, not `end=`. Use
+  `mo.ui.slider(start=1, stop=10, label=…)` or the positional form
+  `mo.ui.slider(1, 10, label=…)`. `end=` raises at render time.
+- **`mo.ui.radio` / `mo.ui.dropdown` with dict `options=`**: the
+  `value=` default passed at construction is a **key** (the label
+  the reader sees), but `.value` read at runtime returns the
+  **mapped value** (the dict value), not the key. So a constructor
+  like `mo.ui.dropdown(options={"Attack Roll": "attack",
+  "Saving Throw": "save"}, value="Attack Roll")` must be paired
+  with response-cell comparisons that test the mapped value —
+  `if mode.value == "attack":`, not `== "Attack Roll"`. If the
+  author wants to compare against the key, use `.selected_key`
+  instead of `.value`.
+
+When fixing a constructor kwarg, audit every `<widget>.value ==`
+comparison downstream. Stale equality checks silently evaluate to
+`False` and the exercise appears to "do nothing" in the browser —
+there is no error, just an unresponsive widget.
 
 ## Template for a minimal exercise
 
@@ -99,19 +177,24 @@ def intro(mo):
 @app.cell
 def step_1(mo):
     # UI cell: present an input the reader can manipulate.
-    value = mo.ui.slider(1, 10, label="<what does this control?>")
-    mo.md(f"**<prompt for the reader>**\n\n{value}")
-    return (value,)
+    # Use start=/stop= on sliders — end= is a stale alias that raises
+    # in the browser. Positional (1, 10) is also correct.
+    step_1_input = mo.ui.slider(start=1, stop=10, label="<what does this control?>")
+    mo.md(f"**<prompt for the reader>**\n\n{step_1_input}")
+    return (step_1_input,)
 
 
 @app.cell
-def step_1_result(mo, value):
+def step_1_result(mo, step_1_input):
     # Response cell: read the input and render something that changes
-    # as the reader plays with it.
-    if value.value < 5:
-        mo.md(f"You chose **{value.value}**. Try a larger value.")
+    # as the reader plays with it. `_chosen` is cell-local (underscore
+    # prefix) so neither this name nor any other cell's `_chosen`
+    # collides at module scope — and it does NOT go in `return`.
+    _chosen = step_1_input.value
+    if _chosen < 5:
+        mo.md(f"You chose **{_chosen}**. Try a larger value.")
     else:
-        mo.md(f"You chose **{value.value}**. Notice how <observation>.")
+        mo.md(f"You chose **{_chosen}**. Notice how <observation>.")
 
 
 if __name__ == "__main__":
@@ -165,3 +248,14 @@ prefer the standard library or pure-Python packages.
 - **Overreaching on UI.** One or two `mo.ui.*` widgets per concept is
   plenty. A dashboard-grade exercise with ten controls obscures what
   the reader is supposed to learn.
+- **Stale kwargs on `mo.ui.*` widgets.** `end=` on `slider`,
+  `on_value=` where the current API is `on_change=`, anything else
+  the training snapshot remembers from an old marimo version. The
+  cell-by-cell template above is known to work on the installed
+  runtime; deviations should be checked against
+  `https://docs.marimo.io/api/` first.
+- **Exporting cell-locals.** Anything in a cell's `return (...)`
+  tuple that no other cell parameterizes on is either unused or —
+  worse — silently colliding with a same-name export from another
+  cell. Rename it with a leading underscore and drop it from the
+  return.

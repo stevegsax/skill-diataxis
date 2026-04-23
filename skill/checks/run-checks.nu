@@ -18,6 +18,8 @@ const CHECKS = [
     # Format checks
     check-marimo-format
     check-marimo-ast
+    check-marimo-cell-collisions
+    check-marimo-value-compare
     check-pyodide-imports
     check-exercise-content
     check-latex-math

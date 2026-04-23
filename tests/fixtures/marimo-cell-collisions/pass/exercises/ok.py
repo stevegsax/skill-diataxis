@@ -1,0 +1,26 @@
+import marimo
+
+app = marimo.App()
+
+
+@app.cell
+def _setup():
+    import marimo as mo
+    return (mo,)
+
+
+@app.cell
+def step_1(mo):
+    step_1_input = mo.ui.slider(start=1, stop=10, label="Pick a number")
+    mo.md(f"**Choose**: {step_1_input}")
+    return (step_1_input,)
+
+
+@app.cell
+def step_1_result(mo, step_1_input):
+    _chosen = step_1_input.value
+    mo.md(f"You chose {_chosen}.")
+
+
+if __name__ == "__main__":
+    app.run()
