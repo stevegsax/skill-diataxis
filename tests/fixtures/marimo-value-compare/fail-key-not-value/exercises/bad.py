@@ -23,10 +23,12 @@ def ui(mo):
 def respond(mo, mode):
     # Bug: comparing against the KEY (label), but .value returns the
     # mapped value ("attack"/"save"). This comparison is always False.
+    _result = None
     if mode.value == "Attack Roll":
-        mo.md("Roll the die.")
+        _result = mo.md("Roll the die.")
     else:
-        mo.md("Hold the die.")
+        _result = mo.md("Hold the die.")
+    _result
 
 
 if __name__ == "__main__":

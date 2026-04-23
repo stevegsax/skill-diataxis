@@ -79,6 +79,56 @@ depend on. A few practical consequences:
   cells can parameterize on them. Marimo will not lift module-level
   imports into every cell's scope automatically.
 
+### The silent-display trap
+
+Marimo's cell compiler (see `marimo/_ast/compiler.py`) treats a
+cell body's *last* top-level statement as the display expression —
+but only if it is an `ast.Expr` (a bare expression statement). If
+the last statement is anything else — an `if`/`else`, a `for`
+loop, an `assign`, a `with` block — the compiler replaces the
+display with a hardcoded `None`. A cell that ends like this::
+
+    if mode.value == "attack":
+        mo.md("Roll the die.")
+    else:
+        mo.md("Hold the die.")
+
+renders as *nothing* in the browser. The `mo.md` calls are inside
+branches of the final `If`; the last *top-level* statement is the
+`If` itself, and marimo throws its value away. `marimo export
+html-wasm` emits the bundle without complaint — the bug only
+surfaces when a reader opens the page.
+
+The fix pattern is always the same: hoist a default into an
+underscore-prefixed local (so it does not become a cell export),
+assign to it inside each branch, and end the cell with a bare
+expression referencing the local.
+
+    _result = None
+    if mode.value == "attack":
+        _result = mo.md("Roll the die.")
+    else:
+        _result = mo.md("Hold the die.")
+    _result
+
+A single-branch version works the same way::
+
+    _result = mo.md("Fill in the fields above.")
+    if pick.value and submit.value:
+        _result = mo.md(f"Got {pick.value}.")
+    _result
+
+For simple binary cases, a ternary inside one `mo.md` call is often
+cleaner and avoids the pattern entirely::
+
+    mo.md(f"{pick.value} is {'small' if pick.value < 5 else 'large'}.")
+
+The `check-marimo-cell-display` check flags any cell whose last
+top-level statement is a compound control-flow block. It is
+intentionally narrow — setup cells that end with an import and a
+return, and pure-compute cells that end with an assignment and a
+return, are *supposed* to have no display and are not flagged.
+
 ### The cell-collision trap
 
 Names like `table`, `result`, `needed`, `total`, `r`, `df`, `fig`, and
@@ -187,14 +237,21 @@ def step_1(mo):
 @app.cell
 def step_1_result(mo, step_1_input):
     # Response cell: read the input and render something that changes
-    # as the reader plays with it. `_chosen` is cell-local (underscore
-    # prefix) so neither this name nor any other cell's `_chosen`
-    # collides at module scope — and it does NOT go in `return`.
+    # as the reader plays with it. Two rules at work here:
+    #   1. `_chosen` is cell-local (underscore prefix) so it does
+    #      not collide with any other cell's `_chosen` and does not
+    #      appear in `return (...)`.
+    #   2. The cell ends with a bare `_result` expression. If it
+    #      ended with the `if`/`else` instead, marimo would display
+    #      None no matter which branch ran (see "The silent-display
+    #      trap" above).
     _chosen = step_1_input.value
+    _result = None
     if _chosen < 5:
-        mo.md(f"You chose **{_chosen}**. Try a larger value.")
+        _result = mo.md(f"You chose **{_chosen}**. Try a larger value.")
     else:
-        mo.md(f"You chose **{_chosen}**. Notice how <observation>.")
+        _result = mo.md(f"You chose **{_chosen}**. Notice how <observation>.")
+    _result
 
 
 if __name__ == "__main__":
@@ -259,3 +316,10 @@ prefer the standard library or pure-Python packages.
   worse — silently colliding with a same-name export from another
   cell. Rename it with a leading underscore and drop it from the
   return.
+- **Ending a cell with a compound statement.** Any cell whose last
+  top-level statement is an `if`/`else`, `for`, `while`, `with`,
+  `try`, or `match` displays `None`, regardless of what the
+  branches produce. The branches may call `mo.md(...)` a dozen
+  times and it changes nothing — marimo's compiler only displays
+  the *last* top-level `Expr`. Use the `_result = None; if …;
+  _result` pattern from "The silent-display trap" above.

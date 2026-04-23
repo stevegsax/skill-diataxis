@@ -20,10 +20,12 @@ def ui(mo):
 
 @app.cell
 def respond(mo, pick):
+    _result = None
     if pick.value == "one":
-        mo.md("picked one")
+        _result = mo.md("picked one")
     else:
-        mo.md("picked two")
+        _result = mo.md("picked two")
+    _result
 
 
 if __name__ == "__main__":

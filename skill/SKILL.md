@@ -577,7 +577,7 @@ marimo is pre-1.0 and trains drift across minor versions, so an
 older remembered signature is a likely source of silent
 browser-time failures.
 
-Five deterministic checks cover exercises, and all run on every
+Six deterministic checks cover exercises, and all run on every
 score pass:
 
 - `check-exercise-exists` — the listed `.py` file is on disk.
@@ -587,11 +587,16 @@ score pass:
 - `check-marimo-cell-collisions` — no non-underscore name is
   assigned at the top level of more than one `@app.cell`
   (collisions pass export but break in the browser).
+- `check-marimo-cell-display` — no `@app.cell` ends with a compound
+  control-flow statement (`if`/`for`/`while`/`with`/`try`/`match`).
+  Marimo's compiler only displays the *last* top-level `Expr`, so
+  a cell that ends with `if cond: mo.md(…) else: mo.md(…)` renders
+  as None.
 - `check-marimo-value-compare` — `.value == <literal>` comparisons
   on dict-options widgets are tested against the mapped value, not
   the key (the reverse silently evaluates to False).
 
-All five have a deterministic remediation: write the exercise
+All six have a deterministic remediation: write the exercise
 correctly per `references/exercises.md`. Treat a failure as a fix
 to make, not a decision to surface to the user.
 

@@ -21,11 +21,14 @@ def ui(mo):
 
 @app.cell
 def respond(mo, mode):
-    # Compares against the mapped value — correct.
+    # Compares against the mapped value — correct. Also ends with a
+    # bare expression so marimo has something to display.
+    _result = None
     if mode.value == "attack":
-        mo.md("Roll the die.")
+        _result = mo.md("Roll the die.")
     else:
-        mo.md("Hold the die.")
+        _result = mo.md("Hold the die.")
+    _result
 
 
 if __name__ == "__main__":

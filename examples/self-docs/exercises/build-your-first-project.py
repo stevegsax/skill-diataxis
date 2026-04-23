@@ -49,20 +49,20 @@ def step_1(mo):
 
 @app.cell
 def step_1_result(mo, project_name, project_type, audience):
+    _result = mo.md("*Fill in the fields above to see the TOML preview.*")
     if project_name.value and audience.value:
-        step_1_toml = f"""```toml
+        _step_1_toml = f"""```toml
 [project]
 name = "{project_name.value}"
 type = "{project_type.value}"
 audience = "{audience.value}"
 ```"""
-        mo.md(f"""
+        _result = mo.md(f"""
         Your `[project]` section:
 
-        {step_1_toml}
+        {_step_1_toml}
         """)
-    else:
-        mo.md("*Fill in the fields above to see the TOML preview.*")
+    _result
 
 
 @app.cell
@@ -95,20 +95,20 @@ def step_2(mo):
 
 @app.cell
 def step_2_result(mo, topic_slug, topic_title, complexity):
+    _result = mo.md("*Fill in the fields above to see the TOML preview.*")
     if topic_slug.value and topic_title.value:
-        step_2_toml = f"""```toml
+        _step_2_toml = f"""```toml
 [topics.{topic_slug.value}]
 title = "{topic_title.value}"
 complexity = "{complexity.value}"
 order = 1
 ```"""
-        mo.md(f"""
+        _result = mo.md(f"""
         Your topic definition:
 
-        {step_2_toml}
+        {_step_2_toml}
         """)
-    else:
-        mo.md("*Fill in the fields above to see the TOML preview.*")
+    _result
 
 
 @app.cell
@@ -135,31 +135,31 @@ def step_3(mo):
 
 @app.cell
 def step_3_result(mo, topic_slug, covers, guidance_text):
+    _result = mo.md("*Fill in the fields above to see the TOML preview.*")
     if topic_slug.value and covers.value:
-        step_3_items = [line.strip() for line in covers.value.strip().split("\n") if line.strip()]
-        step_3_covers_toml = ",\n    ".join(f'"{item}"' for item in step_3_items)
-        step_3_guidance = guidance_text.value or "Keep it simple."
+        _step_3_items = [line.strip() for line in covers.value.strip().split("\n") if line.strip()]
+        _step_3_covers_toml = ",\n    ".join(f'"{item}"' for item in _step_3_items)
+        _step_3_guidance = guidance_text.value or "Keep it simple."
 
-        step_3_toml = f"""```toml
+        _step_3_toml = f"""```toml
 [topics.{topic_slug.value}.tutorials]
 file = "tutorials/{topic_slug.value}.md"
 status = "planned"
 covers = [
-    {step_3_covers_toml},
+    {_step_3_covers_toml},
 ]
 detail = "Step-by-step walkthrough with visible results after each step."
-guidance = \"\"\"{step_3_guidance}\"\"\"
+guidance = \"\"\"{_step_3_guidance}\"\"\"
 ```"""
-        mo.md(f"""
+        _result = mo.md(f"""
         Your tutorial entry:
 
-        {step_3_toml}
+        {_step_3_toml}
 
         The `covers` list is the scoring contract — each item will be checked
         when evaluating the documentation.
         """)
-    else:
-        mo.md("*Fill in the fields above to see the TOML preview.*")
+    _result
 
 
 if __name__ == "__main__":
