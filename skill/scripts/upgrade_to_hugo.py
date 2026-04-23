@@ -350,6 +350,24 @@ def _looks_like_math(span: str) -> bool:
     return False
 
 
+def _split_frontmatter(text: str) -> tuple[str, str]:
+    """Split TOML frontmatter from body.
+
+    Returns ``(frontmatter, body)`` where ``frontmatter`` includes both
+    ``+++`` fences and their surrounding newlines. Files without
+    frontmatter return ``("", text)``. A malformed frontmatter (opening
+    fence with no closing fence) is treated as no frontmatter, so the
+    caller sees the full text as body.
+    """
+    if not text.startswith("+++"):
+        return "", text
+    lines = text.splitlines(keepends=True)
+    for i, line in enumerate(lines[1:], start=1):
+        if line.rstrip("\r\n") == "+++":
+            return "".join(lines[: i + 1]), "".join(lines[i + 1 :])
+    return "", text
+
+
 def rewrite_math_delimiters(body: str) -> str:
     """Convert `$...$` → `\\(...\\)` and `$$...$$` → `\\[...\\]`.
 
@@ -386,6 +404,22 @@ def rewrite_math_delimiters(body: str) -> str:
         working = working.replace(f"\x00STASH{i}\x00", snippet)
 
     return working
+
+
+def rewrite_math_in_file(md_path: Path) -> bool:
+    """Rewrite dollar-math in a file, preserving frontmatter.
+
+    Splits off TOML frontmatter before rewriting so values like a
+    ``description = "Costs about $5"`` are left alone, then rewrites
+    math in the body only. Returns ``True`` if the file was modified.
+    """
+    text = md_path.read_text()
+    fm, body = _split_frontmatter(text)
+    new_body = rewrite_math_delimiters(body)
+    if new_body == body:
+        return False
+    md_path.write_text(fm + new_body)
+    return True
 
 
 def _has_dollar_math(text: str) -> bool:
@@ -476,7 +510,6 @@ def upgrade_content_file(
     detail = entry.get("detail") or ""
 
     body = rewrite_html_links(body)
-    body = rewrite_math_delimiters(body)
 
     frontmatter = build_frontmatter(
         title=title,
@@ -505,7 +538,6 @@ def upgrade_homepage(diataxis_dir: Path, structure: dict) -> bool:
     description = project.get("description") or ""
 
     body = rewrite_html_links(body)
-    body = rewrite_math_delimiters(body)
 
     fm_lines = [
         "+++",
@@ -576,7 +608,6 @@ def promote_stray_quadrant_index(diataxis_dir: Path, quadrant: str) -> str | Non
     if title is None:
         title = QUADRANT_LABELS[quadrant]
     body = rewrite_html_links(body)
-    body = rewrite_math_delimiters(body)
 
     fm_lines = [
         "+++",
@@ -842,6 +873,24 @@ def run_upgrade(diataxis_dir: Path) -> dict:
 
     if ensure_examples_landing(diataxis_dir, structure):
         changes.append("created examples/_index.md")
+
+    # Math-delimiter rewrite runs as its own pass over every candidate
+    # markdown file so files that already have frontmatter from a prior
+    # upgrade (or were authored in Hugo format from the start) still get
+    # their dollar-math canonicalized.
+    math_candidates: list[Path] = []
+    index_md = diataxis_dir / "index.md"
+    if index_md.exists():
+        math_candidates.append(index_md)
+    for quadrant in QUADRANT_WEIGHTS:
+        qdir = diataxis_dir / quadrant
+        if qdir.is_dir():
+            math_candidates.extend(sorted(qdir.glob("*.md")))
+    for md in math_candidates:
+        if rewrite_math_in_file(md):
+            changes.append(
+                f"rewrote math delimiters in {md.relative_to(diataxis_dir)}"
+            )
 
     return {
         "changes": changes,
